@@ -1,0 +1,85 @@
+<div class="container">
+  <div class="row align-items-stretch overflow-hidden" style="height:500px;">
+
+    <!-- STATS - Hides at sizes smaller than md -->
+    <div class="col-12 col-lg-3 d-block pb-4">
+      <div class="d-flex flex-column border rounded bg-body-secondary h-100 overflow-auto p-1">
+        <div class="p-2">
+          <h6 class="text-body-secondary m-0">
+            <i class="bi-calendar2-week me-2"></i>Timeline
+          </h6>
+          <span id="timeline" class="fs-6 m-0 border-bottom border-2 border-light" data-bs-toggle="tooltip"
+            data-bs-placement="right" data-bs-title=" "></span>
+        </div>
+        <div class="p-2">
+          <h6 class="text-body-secondary m-0">
+            <i class="bi-chat-right-dots me-2"></i>Conversations
+          </h6>
+          <span id="conversations" class="fs-6 m-0"></span>
+        </div>
+        <div class="p-2">
+          <h6 class="text-body-secondary m-0">
+            <i class="bi-stopwatch me-2"></i>Timestamps
+          </h6>
+          <span id="timestamps" class="fs-6 m-0"></span>
+        </div>
+        <div class="p-2">
+          <h6 class="text-body-secondary m-0">
+            <i class="bi-clipboard-data me-2"></i>Registers
+          </h6>
+          <span id="counts" class="fs-6 m-0 border-bottom border-2 border-light" data-bs-toggle="tooltip"
+            data-bs-placement="right" data-bs-title=" "></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- REGISTERS -->
+    <div class="col-12 col-lg-9 pb-4">
+      <div id="registers-panel" class="d-flex flex-column bg-body-secondary rounded border h-100">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between p-2 border-bottom">
+          <!-- Title -->
+          <h3 class="mb-0"><i class="bi-clipboard-data me-2"></i>Registers</h3>
+          <!-- Utility buttons -->
+          <div class="btn-group">
+            <button id="name-mapping-btn" class="btn btn-sm btn-outline-secondary" type="button">
+              Name Mapping
+            </button>
+            <button id="select-all-btn" class="btn btn-sm btn-outline-secondary" type="button">
+              Select All
+            </button>
+            <button id="unselect-all-btn" class="btn btn-sm btn-outline-secondary" type="button">
+              Unselect All
+            </button>
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+              data-bs-auto-close="outside">
+              Filters
+            </button>
+            <form class="dropdown-menu p-2">
+              <div class="form-check">
+                <input id="filter-constant-check" class="filter-check form-check-input" type="checkbox"
+                  data-filter="constant" checked>
+                <label class="form-check-label" for="filter-constant-check">Constant</label>
+              </div>
+              <div class="form-check">
+                <input id="filter-variable-check" class="filter-check form-check-input" type="checkbox"
+                  data-filter="variable" checked>
+                <label class="form-check-label" for="filter-variable-check">Variable</label>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="row m-0 flex-grow-1 overflow-hidden">
+          <div id="conversation-list" class="col-6 col-lg-4 h-100 border-end p-2 overflow-auto"
+            style="max-height: 400px; overflow-y: auto;"></div>
+          <div id="conversation-register-lists" class="col h-100 p-2 overflow-auto"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

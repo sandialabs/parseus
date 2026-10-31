@@ -1,0 +1,90 @@
+<div id="{{model.pk}}-meta-modal" class="modal fade m-0 p-0" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ model.instance_name }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="height: 75vh; overflow-y: auto;">
+        <h5>Drawing data</h5>
+        <div style="overflow:auto; max-height:1000px">
+          {% if model.drawing_data and 'table' in model.drawing_data and '<td' in model.drawing_data %}
+          {{model.drawing_data | safe}}
+          {% elif model.drawing_data and 'table' not in model.drawing_data %}
+          <code>{{model.drawing_data}}</code>
+          {% else %}
+          {# Blank, NULL, or a table with no data cells (an empty DataFrame still renders a header-only <table>). #}
+          <p class="text-body-secondary mb-0">
+            <i class="bi bi-info-circle me-1"></i>No training data to show for this model.
+          </p>
+          {% endif %}
+        </div>
+        <br>
+        <h5>Metadata</h5>
+        {% with model.trainedmodelmetadata_set.all|first as meta %}
+        <table class="table table-dark table-bordered">
+          <tbody>
+            <tr>
+              <th scope="row">Trained model</th>
+              <td class="text-break">{{ model.instance_name }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Model</th>
+              <td>{{model.analytic.model}}</td>
+            </tr>
+            <tr>
+              <th scope="row">Analytic</th>
+              <td>{{model.analytic.name}}</td>
+            </tr>
+            <tr>
+              <th scope="row">Created at</th>
+              <td><time data-timestamp="{{ meta.created_at|date:'c' }}">{{ meta.created_at }}</time></td>
+            </tr>
+            <tr>
+              <th colspan="2" class="text-center">Elastic</th>
+            </tr>
+            <tr>
+              <th scope="row">Host</th>
+              <td>{{meta.es_host}}</td>
+            </tr>
+            <tr>
+              <th scope="row">Index</th>
+              <td>{{meta.idx}}</td>
+            </tr>
+            <tr>
+              <th scope="row">Query</th>
+              <td>{{meta.query}}</td>
+            </tr>
+            <tr>
+              <th scope="row">Aggs</th>
+              <td>{{meta.aggs}}</td>
+            </tr>
+            <tr>
+              <th scope="row">Composite aggs</th>
+              <td>{{meta.comp_aggs}}</td>
+            </tr>
+            <tr>
+              <th scope="row">Return fields</th>
+              <td>{{meta.return_fields}}</td>
+            </tr>
+            <tr>
+              <th scope="row">IP filter</th>
+              <td>{{meta.ip_filter}}</td>
+            </tr>
+            <tr>
+              <th scope="row">Start date</th>
+              <td>{{meta.start_date}}</td>
+            </tr>
+            <tr>
+              <th scope="row">End date</th>
+              <td>{{meta.end_date}}</td>
+            </tr>
+          </tbody>
+        </table>
+        {% endwith %}
+      </div>
+    </div>
+  </div>
+</div>

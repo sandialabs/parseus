@@ -1,0 +1,36 @@
+<template id="summary-item-template">
+  <div class="summary-item d-none"></div>
+</template>
+
+<template id="conversation-item-template">
+  <div class="conversation-item mb-1 d-none">
+    <button class="btn btn-dark border w-100 text-start">10.0.0.1 → 10.0.0.2</button>
+  </div>
+</template>
+
+<template id="fc-conversation-item-template">
+  <div class="fc-conversation-item mb-1 d-none">
+    <button class="btn btn-dark border w-100 text-start">10.0.0.1 → 10.0.0.2</button>
+  </div>
+</template>
+
+<template id="register-list-template">
+  <div class="register-list row m-0 gx-2 d-none overflow-auto" style="max-height:500px;"></div>
+</template>
+
+<template id="register-item-template">
+  <div class="register-item col-12 col-lg-6 d-none">
+    <div class="border p-1 mb-1 rounded">
+      <div class="form-check">
+        <input id="register-template-checkbox" class="register-check form-check-input" type="checkbox" value="">
+        <label class="form-check-label" for="register-template-checkbox"></label>
+        <span class="register-modal-icon" data-bs-toggle="modal" data-bs-target="#register-modal">
+          <a href="#" class="link-light" data-bs-toggle="tooltip" data-bs-placement="right"
+            data-bs-title="Register Statistics">
+            <i class="bi bi-info-circle"></i>
+          </a>
+        </span>
+      </div>
+    </div>
+  </div>
+</template>

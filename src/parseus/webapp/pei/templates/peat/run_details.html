@@ -1,0 +1,654 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ object.name|default:object.run_dir }} | PEAT Run | {{ block.super }}{% endblock %}
+
+{% block custom_styles %}
+<link rel="stylesheet" href="{% static 'css/peat.css' %}">
+<style>
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .rotate,
+  .rotate-1 {
+    display: inline-block;
+    animation: rotate infinite 3s linear;
+  }
+
+  .rotate-1 {
+    animation-duration: 1s;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+
+  .pulse {
+    display: inline-block;
+    animation: pulse 1.5s infinite;
+  }
+
+  .peat-run-summary-header {
+    color: #d8e6ff !important;
+    background: rgba(52, 130, 247, 0.16) !important;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .peat-run-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    gap: 1rem;
+  }
+
+  .peat-run-metric {
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 1rem;
+    background: rgba(15, 23, 42, 0.32);
+    padding: 1rem;
+  }
+
+  .peat-run-metric strong {
+    display: block;
+    color: #f8fbff;
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .peat-run-metric span,
+  .peat-run-file-list small,
+  .peat-device-detail {
+    color: var(--bs-secondary-color);
+  }
+
+  .peat-run-device-card,
+  .peat-run-file-card {
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 1rem;
+    background: rgba(15, 23, 42, 0.22);
+  }
+
+  .peat-run-file-list {
+    max-height: 32rem;
+    overflow: auto;
+  }
+
+  .peat-run-directory-tree,
+  .peat-run-directory-tree ul {
+    list-style: none;
+    margin: 0;
+    padding-left: 0;
+  }
+
+  .peat-run-directory-tree ul {
+    margin-left: 1.1rem;
+    padding-left: 0.8rem;
+    border-left: 1px solid rgba(148, 163, 184, 0.16);
+  }
+
+  .peat-run-tree-item,
+  .peat-run-tree-folder > summary {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.86rem;
+    padding: 0.35rem 0;
+  }
+
+  .peat-run-tree-folder > summary {
+    cursor: pointer;
+    color: #d8e6ff;
+  }
+
+  .peat-run-tree-file-link,
+  .peat-run-tree-file-link code {
+    color: var(--bs-code-color);
+    text-decoration: none;
+  }
+
+  .peat-run-tree-file-link:hover,
+  .peat-run-tree-file-link:hover code {
+    color: var(--bs-code-color);
+    text-decoration: underline;
+  }
+
+  .peat-run-tree-download {
+    opacity: 0.78;
+  }
+
+  .peat-run-tree-download:hover {
+    opacity: 1;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="peat-workspace peat-config-workspace">
+  <div class="container px-4 pt-4 peat-breadcrumb">
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+      <ol class="breadcrumb p-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+          <a class="link-body-emphasis" href="{% url 'peat:home' %}">
+            <i class="bi-house-door-fill"></i>
+          </a>
+        </li>
+        {% if object.get_method == "scan" %}
+          {% if object.config %}
+          <li class="breadcrumb-item">
+            <a class="link-body-emphasis fw-semibold text-decoration-none" href="{% url 'peat:peatconfig-list' %}">
+              PEAT Configurations
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a class="link-body-emphasis fw-semibold text-decoration-none" href="{% url 'peat:peatconfig-details' object.config.id %}">
+              {{ object.config.name }}
+            </a>
+          </li>
+        {% else %}
+          <li class="breadcrumb-item">
+            <a class="link-body-emphasis fw-semibold text-decoration-none" href="{% url 'peat:peatscan-config' %}">
+              Default PEAT Runs
+            </a>
+          </li>
+          {% endif %}
+        {% elif object.get_method == "pull" %}
+          {% if object.config %}
+          <li class="breadcrumb-item">
+            <a class="link-body-emphasis fw-semibold text-decoration-none" href="{% url 'peat:peatconfig-list' %}">
+              PEAT Configurations
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a class="link-body-emphasis fw-semibold text-decoration-none" href="{% url 'peat:peatconfig-details' object.config.id %}">
+              {{ object.config.name }}
+            </a>
+          </li>
+          {% else %}
+          <li class="breadcrumb-item">
+            <a class="link-body-emphasis fw-semibold text-decoration-none" href="{% url 'peat:peatscan-config' %}">
+              Default PEAT Runs
+            </a>
+          </li>
+          {% endif %}
+        {% endif %}
+        <li class="breadcrumb-item active" aria-current="page">{{ object.run_dir|default:object.name }}</li>
+      </ol>
+    </nav>
+  </div>
+
+  <div class="container px-4 py-3">
+    <div class="peat-page-header peat-workspace-hero peat-detail-hero peat-run-focus-header p-4 p-lg-5">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+          <div class="peat-kicker mb-3">
+            {% if object.get_method == "scan" %}
+            <i class="bi-radar"></i> PEAT scan telemetry
+            {% else %}
+            <i class="bi-box-arrow-down"></i> PEAT pull telemetry
+            {% endif %}
+          </div>
+          <h1 class="display-6 fw-bold peat-title mb-3">{{ object.name|default:object.run_dir }}</h1>
+          <p class="lead mb-0">Review run status, generated device summaries, and live console output from this PEAT {{ object.get_method }}.</p>
+          <div class="peat-workspace-chips mt-3" aria-label="Run summary">
+            <span><i class="bi-activity"></i> <span id="obj-status">{{ object.status }}</span></span>
+            <span><i class="bi-clock-history"></i> <time data-timestamp="{{ object.created|date:'c' }}">{{ object.created }}</time></span>
+            {% if object.config %}
+            <span><i class="bi-layout-text-sidebar-reverse"></i> {{ object.config.name }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="peat-workspace-stat-grid mx-auto ms-lg-auto">
+            <div class="peat-workspace-stat">
+              {% if object.get_method == "scan" %}
+              <i class="bi-radar"></i>
+              <strong>Scan</strong>
+              <span>Validate selected hosts.</span>
+              {% else %}
+              <i class="bi-box-arrow-down"></i>
+              <strong>Pull</strong>
+              <span>Collect device artifacts.</span>
+              {% endif %}
+            </div>
+            <div class="peat-workspace-stat">
+              <i class="bi-terminal"></i>
+              <strong>Console</strong>
+              <span>Follow live run output.</span>
+            </div>
+          </div>
+          <div class="d-grid gap-2 mt-3 mx-auto ms-lg-auto" style="width: min(100%, 19rem);">
+            <button type="button" class="btn btn-danger {% if object.status != 'running' and object.status != 'started' %}d-none{% endif %}" id="run-stop-button">
+              <i class="bi-stop-circle me-2"></i>Stop Run
+            </button>
+            <button type="button" class="btn btn-primary" id="run-download-button" disabled>
+              <i class="bi-download me-2"></i>Download Run
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container px-4 pb-3">
+    <div class="peat-panel p-4 p-lg-5">
+      <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center mb-4">
+        <div class="d-flex gap-3 align-items-start">
+          <span class="peat-mini-orb"><i class="bi-card-checklist"></i></span>
+          <div>
+            <h2 class="h4 peat-title mb-1">Run summary</h2>
+            <p class="text-body-secondary mb-0">Summary data appears once PEAT finishes processing this {{ object.get_method }}.</p>
+          </div>
+        </div>
+        <div class="text-body-secondary fw-semibold">
+          <i class="bi-folder2-open me-2"></i>{{ object.run_dir|default:"Run directory pending" }}
+        </div>
+      </div>
+
+      <div class="peat-action-strip p-4" id="loading-table">
+        <div class="d-flex justify-content-center align-items-center fs-4 peat-title">
+          <i class="bi-disc me-2 rotate-1"></i>{{ object.get_method|title }} in progress...
+        </div>
+        <p class="text-body-secondary text-center mb-0 mt-2">Keep this page open to watch the status and console stream update.</p>
+      </div>
+
+      <div class="d-none" id="summary-table">
+        <div id="run-outcome" class="alert mb-4" role="status"></div>
+        <div class="peat-run-metric-grid mb-4" id="run-metrics"></div>
+
+        <div class="row g-4">
+          <div class="col-xl-7">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h3 class="h5 peat-title mb-0">Devices and artifacts</h3>
+              <span class="badge text-bg-secondary" id="device-count-badge">0 devices</span>
+            </div>
+            <div class="vstack gap-3" id="device-summary-list"></div>
+          </div>
+          <div class="col-xl-5">
+            <div class="peat-run-file-card p-3 mb-4">
+              <h3 class="h5 peat-title mb-3"><i class="bi-pin-angle me-2"></i>Important files</h3>
+              <div class="vstack gap-2" id="important-files-list"></div>
+            </div>
+            <div class="peat-run-file-card p-3">
+              <h3 class="h5 peat-title mb-2"><i class="bi-diagram-3 me-2"></i>Output directory map</h3>
+              <p class="text-body-secondary small mb-3">Relative paths inside the downloadable run archive.</p>
+              <div class="peat-run-file-list" id="run-file-tree"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="container px-4 pb-5">
+    <div class="peat-panel p-4 p-lg-5">
+      <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center mb-4">
+        <div class="d-flex gap-3 align-items-start">
+          <span class="peat-mini-orb"><i class="bi-terminal"></i></span>
+          <div>
+            <h2 class="h4 peat-title mb-1">Log stream</h2>
+            <p class="text-body-secondary mb-0">Follow PEAT output as it writes progress and result details.</p>
+          </div>
+        </div>
+        <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#log-stream-collapse" aria-expanded="true" aria-controls="log-stream-collapse">
+          <i class="bi-terminal me-2"></i>Toggle Log
+        </button>
+      </div>
+      <div class="collapse show" id="log-stream-collapse">
+        <div class="peat-terminal">
+          <div class="peat-terminal-bar"><span class="peat-terminal-dot"></span> {{ object.get_method }} result console</div>
+          <div id="log-container" class="peat-terminal-body">
+            <pre id="log-content" class="mb-0"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block custom_scripts %}
+<script type="text/javascript" src="{% static 'js/peat.js' %}"></script>
+<script>
+  const logContent = document.getElementById('log-content');
+  const logContainer = document.getElementById('log-container');
+  peat.peatLogSocket('{{ object.run_dir|escapejs }}', '{{ object.get_method }}');
+  let intervalId;
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>'"]/g, character => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[character]));
+  }
+
+  function metricCard(label, value, icon) {
+    const displayValue = value === null || value === undefined || value === "" ? "—" : value;
+    return `<div class="peat-run-metric"><span><i class="${icon} me-1"></i>${escapeHtml(label)}</span><strong>${escapeHtml(displayValue)}</strong></div>`;
+  }
+
+  function renderFileLink(file, label = null, includeDownload = true) {
+    const displayName = label || file.path || file.name || "file";
+    const viewUrl = file.view_url || file.download_url || "#";
+    const downloadUrl = file.download_url || file.view_url || "#";
+    const viewLink = `<a class="peat-run-tree-file-link" href="${escapeHtml(viewUrl)}" target="_blank" rel="noopener"><code>${escapeHtml(displayName)}</code></a>`;
+    if (!includeDownload || downloadUrl === "#") {
+      return viewLink;
+    }
+    return `${viewLink} <a class="peat-run-tree-download ms-2" href="${escapeHtml(downloadUrl)}" title="Download ${escapeHtml(displayName)}" aria-label="Download ${escapeHtml(displayName)}"><i class="bi-download"></i></a>`;
+  }
+
+  function buildDirectoryTree(nodes) {
+    const root = { name: "", path: "", type: "dir", children: new Map() };
+    nodes.forEach(node => {
+      const parts = String(node.path || "").split("/").filter(Boolean);
+      if (!parts.length) {
+        return;
+      }
+      let current = root;
+      parts.forEach((part, index) => {
+        const path = parts.slice(0, index + 1).join("/");
+        const isLeaf = index === parts.length - 1;
+        if (!current.children.has(part)) {
+          current.children.set(part, { name: part, path, type: isLeaf ? node.type : "dir", children: new Map() });
+        }
+        const child = current.children.get(part);
+        if (isLeaf) {
+          Object.assign(child, node, { name: node.name || part, path, children: child.children || new Map() });
+        }
+        current = child;
+      });
+    });
+    return root;
+  }
+
+  function sortTreeEntries(node) {
+    return Array.from(node.children.values()).sort((a, b) => {
+      if (a.type !== b.type) {
+        return a.type === "dir" ? -1 : 1;
+      }
+      return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
+    });
+  }
+
+  function renderTreeNode(node, depth, openPaths, hasExistingTree) {
+    if (node.type === "file") {
+      return `<li class="peat-run-tree-item d-flex justify-content-between gap-2 align-items-start">
+        <span><i class="bi-file-earmark me-2"></i>${renderFileLink(node, node.name)}</span>
+        ${node.size_display ? `<small>${escapeHtml(node.size_display)}</small>` : ""}
+      </li>`;
+    }
+
+    const childrenHtml = sortTreeEntries(node).map(child => renderTreeNode(child, depth + 1, openPaths, hasExistingTree)).join("");
+    const isOpen = hasExistingTree ? openPaths.has(node.path) : depth < 1;
+    return `<li>
+      <details class="peat-run-tree-folder" data-path="${escapeHtml(node.path)}" ${isOpen ? "open" : ""}>
+        <summary><i class="bi-folder2-open me-2"></i>${escapeHtml(node.name)}</summary>
+        <ul>${childrenHtml}</ul>
+      </details>
+    </li>`;
+  }
+
+  function renderDirectoryTree(nodes, truncated) {
+    const treeContainer = document.getElementById("run-file-tree");
+    if (!nodes.length) {
+      treeContainer.innerHTML = '<div class="text-body-secondary">No files are available yet.</div>';
+      return;
+    }
+
+    const hasExistingTree = Boolean(treeContainer.querySelector(".peat-run-directory-tree"));
+    const openPaths = new Set(Array.from(treeContainer.querySelectorAll("details[data-path][open]")).map(element => element.dataset.path));
+    const tree = buildDirectoryTree(nodes);
+    const treeHtml = sortTreeEntries(tree).map(node => renderTreeNode(node, 0, openPaths, hasExistingTree)).join("");
+    const truncatedMessage = truncated ? '<div class="text-body-secondary small mt-2">Directory map truncated; download the archive for the complete file list.</div>' : "";
+    treeContainer.innerHTML = `<ul class="peat-run-directory-tree">${treeHtml}</ul>${truncatedMessage}`;
+  }
+
+  function renderRunDetails(data) {
+    const outcome = data.outcome || {};
+    const severity = outcome.severity || "info";
+    const outcomeEl = document.getElementById("run-outcome");
+    outcomeEl.className = `alert alert-${severity} mb-4`;
+    outcomeEl.innerHTML = `<strong>${escapeHtml(outcome.title || "Run details")}</strong><br>${escapeHtml(outcome.message || "")}`;
+
+    const counts = data.counts || {};
+    document.getElementById("run-metrics").innerHTML = [
+      metricCard("Targets", counts.targets, "bi-bullseye"),
+      metricCard("Devices", counts.devices, "bi-router"),
+      metricCard("Files", counts.files, "bi-files"),
+      metricCard("Logs", counts.logs, "bi-terminal"),
+      metricCard("Summaries", counts.summaries, "bi-card-checklist"),
+      metricCard("Archive size", data.tree?.total_size_display, "bi-hdd")
+    ].join("");
+
+    const devices = data.devices || [];
+    const deviceTotal = counts.devices ?? devices.length;
+    document.getElementById("device-count-badge").innerText = `${deviceTotal} device${deviceTotal === 1 ? "" : "s"}`;
+    const deviceList = document.getElementById("device-summary-list");
+    if (devices.length === 0) {
+      deviceList.innerHTML = '<div class="peat-empty-state"><i class="bi-search"></i><strong>No device summaries are present.</strong><br>This may simply mean the scan found no supported devices. Download the run to preserve logs for comparison.</div>';
+    } else {
+      deviceList.innerHTML = devices.map(device => {
+        const facts = [
+          ["IP", device.ip], ["Hostname", device.hostname], ["Serial", device.serial_port],
+          ["MAC", device.mac], ["Vendor", device.vendor], ["Part #", device.part_number],
+          ["OS", device.os], ["Firmware", device.firmware], ["Serial #", device.serial_number],
+          ["Up-time", device.uptime]
+        ].filter(([, value]) => value).map(([key, value]) => `<span class="badge text-bg-dark me-1 mb-1">${escapeHtml(key)}: ${escapeHtml(value)}</span>`).join("");
+        const countBadges = Object.entries(device.counts || {})
+          .filter(([, value]) => Number(value) > 0)
+          .map(([key, value]) => `<span class="badge text-bg-secondary me-1 mb-1">${escapeHtml(key.replaceAll("_", " "))}: ${escapeHtml(value)}</span>`).join("");
+        const topFiles = (device.top_files || []).map(file => `<li>${renderFileLink(file)} <small>${escapeHtml(file.size_display)}</small></li>`).join("");
+        return `<div class="peat-run-device-card p-3">
+          <div class="d-flex justify-content-between gap-3 flex-wrap">
+            <div><h4 class="h5 peat-title mb-1">${escapeHtml(device.id)}</h4><div class="peat-device-detail">${escapeHtml(device.description || device.type || "Device summary")}</div></div>
+            <code class="small">${escapeHtml(device.directory)}</code>
+          </div>
+          <div class="mt-3">${facts || '<span class="text-body-secondary">No core identifiers recorded.</span>'}</div>
+          <div class="mt-2">${countBadges}</div>
+          ${topFiles ? `<details class="mt-2"><summary>Top files in device folder</summary><ul class="mb-0 mt-2">${topFiles}</ul></details>` : ""}
+        </div>`;
+      }).join("");
+    }
+
+    const importantFiles = data.important_files || [];
+    document.getElementById("important-files-list").innerHTML = importantFiles.length ? importantFiles.map(file => `
+      <div class="d-flex justify-content-between gap-3 align-items-start">
+        <div>${renderFileLink(file)}<br><small>${escapeHtml(parseusDatetime.formatTimestamp(file.modified, "compact"))}</small></div>
+        <span class="badge text-bg-secondary">${escapeHtml(file.size_display)}</span>
+      </div>`).join("") : '<div class="text-body-secondary">No standard PEAT summary, log, or metadata files have been written yet.</div>';
+
+    renderDirectoryTree(data.tree?.nodes || [], data.tree?.truncated);
+  }
+
+  function getSummary(pull_or_scan) {
+    let baseUrl;
+    if (pull_or_scan === "pull") {
+      baseUrl = "{% url 'peat:peat-pull' %}";
+    } else if (pull_or_scan === "scan") {
+      baseUrl = "{% url 'peat:peat-scan' %}";
+    } else {
+      console.error("Invalid value for pull_or_scan: " + pull_or_scan);
+      return;
+    }
+
+    const params = new URLSearchParams({ pk: "{{ object.pk }}" });
+
+    fetch(`${baseUrl}?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+    })
+      .then(response => response.json())
+      .then(data => renderRunDetails(data))
+      .catch(error => {
+        console.error('Error fetching items:', error);
+      });
+  }
+
+  function showSummaryTable() {
+    const loadingDiv = document.getElementById("loading-table");
+    const summaryDiv = document.getElementById("summary-table");
+
+    loadingDiv.classList.add("d-none");
+    loadingDiv.classList.remove("d-flex");
+
+    summaryDiv.classList.add("d-block");
+    summaryDiv.classList.remove("d-none");
+  }
+
+  let currentRunDirectory = "{{ object.run_dir|default:''|escapejs }}";
+
+  function updateRunActionButtons(status) {
+    const downloadButton = document.getElementById("run-download-button");
+    const stopButton = document.getElementById("run-stop-button");
+    const hasRunDirectory = Boolean(currentRunDirectory);
+    const isRunning = status === "running" || status === "started";
+
+    stopButton.classList.toggle("d-none", !isRunning);
+    stopButton.disabled = !isRunning;
+
+    downloadButton.disabled = !hasRunDirectory;
+    if (hasRunDirectory) {
+      downloadButton.innerHTML = '<i class="bi-download me-2"></i>Download Run';
+    } else {
+      downloadButton.innerHTML = '<i class="bi-exclamation-circle me-2"></i>Download Unavailable';
+    }
+  }
+
+  function stopRun() {
+    const stopButton = document.getElementById("run-stop-button");
+    stopButton.disabled = true;
+    stopButton.innerHTML = '<i class="bi-hourglass-split me-2"></i>Stopping Run';
+
+    fetch("{% url 'peat:peatRun-stop' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({
+        "pull_or_scan": '{{ object.get_method }}',
+        "pk": "{{ object.pk }}"
+      }),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Unable to stop this PEAT run.');
+        }
+        return response.json();
+      })
+      .then(data => {
+        currentRunStatus = data.status || "stopped";
+        clearInterval(intervalId);
+        document.getElementById("obj-status").innerHTML = peat.getStatusIcons(currentRunStatus);
+        updateRunActionButtons(currentRunStatus);
+        getSummary('{{ object.get_method }}');
+        showSummaryTable();
+      })
+      .catch(error => {
+        console.error('There was a problem stopping the run:', error);
+        toastError(error.message || "Unable to stop this PEAT run.", 5000);
+        stopButton.innerHTML = '<i class="bi-stop-circle me-2"></i>Stop Run';
+        updateRunActionButtons(currentRunStatus);
+      });
+  }
+
+  function downloadRun() {
+    const downloadButton = document.getElementById("run-download-button");
+    const originalContent = downloadButton.innerHTML;
+
+    downloadButton.disabled = true;
+    downloadButton.innerHTML = '<i class="bi-hourglass-split me-2"></i>Preparing Download';
+
+    fetch("{% url 'peat:peatRun-download' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({
+        "pull_or_scan": '{{ object.get_method }}',
+        "pk": "{{ object.pk }}"
+      }),
+    })
+      .then(response => {
+        if (response.status === 404) {
+          throw new Error('Run files are not available.');
+        }
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = downloadUrl;
+        anchor.download = `${currentRunDirectory || "{{ object.name|default:'peat-run'|escapejs }}"}.zip`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+      })
+      .catch(error => {
+        console.error('There was a problem downloading the run:', error);
+        toastError(error.message || "Unable to download this PEAT run.", 5000);
+      })
+      .finally(() => {
+        downloadButton.innerHTML = originalContent;
+        updateRunActionButtons(currentRunStatus);
+      });
+  }
+
+  let currentRunStatus = "{{ object.status }}";
+
+  function getStatus() {
+    fetch("{% url 'peat:peatresults' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({
+        "method": '{{ object.get_method }}',
+        "pk": "{{ object.pk }}"
+      }),
+    })
+      .then(response => response.json())
+      .then(data => {
+        currentRunStatus = data.status;
+        if (data.run_dir) {
+          currentRunDirectory = data.run_dir;
+        }
+        document.getElementById("obj-status").innerHTML = peat.getStatusIcons(data.status);
+        updateRunActionButtons(data.status);
+
+        getSummary('{{ object.get_method }}');
+        showSummaryTable();
+
+        if (data.status === "error" || data.status === "done" || data.status === "stopped") {
+          clearInterval(intervalId);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching items:', error);
+      });
+  }
+
+  $(document).ready(function () {
+    document.getElementById("obj-status").innerHTML = peat.getStatusIcons("{{ object.status }}");
+    updateRunActionButtons(currentRunStatus);
+    document.getElementById("run-stop-button").addEventListener("click", stopRun);
+    document.getElementById("run-download-button").addEventListener("click", downloadRun);
+    intervalId = setInterval(getStatus, 10000);
+    getSummary('{{ object.get_method }}');
+    showSummaryTable();
+    getStatus();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}PEAT | {{ block.super }}{% endblock %}
+
+{% block custom_styles %}
+<link rel="stylesheet" href="{% static 'css/peat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="peat-home">
+  <div class="container px-4 pt-5 pb-4">
+    <div class="peat-hero peat-home-hero p-4 p-lg-5">
+      <div class="row align-items-center g-4 g-lg-5">
+        <div class="col-lg-7">
+          <div class="peat-kicker mb-3"><i class="bi-cpu"></i> PEAT launchpad</div>
+          <h1 class="display-5 fw-bold peat-title mb-3">How would you like to run PEAT?</h1>
+          <p class="lead mb-4">
+            Pick the path that matches the job: a guided configuration workflow for repeatable device work, or a fast
+            default scan/pull when you just need PEAT to get moving.
+          </p>
+          <div class="peat-home-chips" aria-label="PEAT capabilities">
+            <span><i class="bi-hdd-network"></i> Discover</span>
+            <span><i class="bi-box-arrow-down"></i> Pull artifacts</span>
+            <span><i class="bi-filetype-yml"></i> Reuse configs</span>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="peat-home-visual mx-auto ms-lg-auto">
+            <div class="peat-signal-ring peat-signal-ring-one"></div>
+            <div class="peat-signal-ring peat-signal-ring-two"></div>
+            <div class="peat-signal-node peat-signal-node-a"><i class="bi-router"></i></div>
+            <div class="peat-signal-node peat-signal-node-b"><i class="bi-cpu"></i></div>
+            <div class="peat-signal-node peat-signal-node-c"><i class="bi-database"></i></div>
+            <img
+              src="{% static 'images/PEAT_Logo.svg' %}"
+              class="peat-home-logo"
+              alt="PEAT logo"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container px-4 pb-5">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <a href="{% url 'peat:peatconfig-list' %}" class="peat-home-card-link">
+          <div class="card h-100 peat-card peat-route-card peat-route-card-primary">
+            <div class="card-body d-flex flex-column p-4 p-lg-5">
+              <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                <div class="peat-route-icon"><i class="bi-layout-text-sidebar-reverse"></i></div>
+                <span class="peat-route-step">Configured</span>
+              </div>
+              <h2 class="h3 card-title text-white mb-3">Use configurations</h2>
+              <p class="card-text text-body-secondary mb-4">
+                Create or upload PEAT configuration files, choose configured hosts, and run PEAT with saved settings for
+                repeatable scans or artifact pulls.
+              </p>
+              <ul class="peat-route-list mb-4">
+                <li><i class="bi-check2"></i> Build or upload YAML configuration files</li>
+                <li><i class="bi-check2"></i> Save hosts, credentials, modules, and run options</li>
+                <li><i class="bi-check2"></i> Launch configured scans and pulls</li>
+              </ul>
+              <span class="peat-route-cta mt-auto">
+                Open configurations
+                <i class="bi-arrow-right"></i>
+              </span>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-lg-6">
+        <a href="{% url 'peat:peatscan-config' %}" class="peat-home-card-link">
+          <div class="card h-100 peat-card peat-route-card peat-route-card-secondary">
+            <div class="card-body d-flex flex-column p-4 p-lg-5">
+              <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                <div class="peat-route-icon"><i class="bi-broadcast"></i></div>
+                <span class="peat-route-step">Default</span>
+              </div>
+              <h2 class="h3 card-title text-white mb-3">Use PEAT defaults</h2>
+              <p class="card-text text-body-secondary mb-4">
+                Skip configuration setup and run PEAT directly. Provide a CIDR range or target list, then scan or pull
+                with the tool's built-in defaults.
+              </p>
+              <ul class="peat-route-list mb-4">
+                <li><i class="bi-check2"></i> Start from a CIDR range or target list</li>
+                <li><i class="bi-check2"></i> No configuration file required</li>
+                <li><i class="bi-check2"></i> Review default scan and pull results with live logs</li>
+              </ul>
+              <span class="peat-route-cta mt-auto">
+                Start default run
+                <i class="bi-arrow-right"></i>
+              </span>
+            </div>
+          </div>
+      </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

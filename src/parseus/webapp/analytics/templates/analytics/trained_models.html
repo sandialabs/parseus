@@ -1,0 +1,34 @@
+<div class="list-group">
+  {% for model in models %}
+  <div class="btn-group m-1 border" id="trained-model-{{ model.pk }}-line">
+    <button
+      class="btn btn-outline-primary border-0 model-btn text-start text-break"
+      style="--bs-btn-color: var(--bs-body-color); --bs-btn-hover-color: var(--bs-body-color); --bs-btn-active-color: var(--bs-body-color);"
+      value="{{ model.pk }}"
+      name="predict_model"
+      title="{{ model.instance_name }}"
+    >
+      {{ model.instance_name }}
+    </button>
+
+    <span 
+      class="float-end py-2 ps-2 pe-1"
+      onclick="analytics.analytic_modal('{{model.pk}}-meta-modal')"
+    >
+      <i class="bi bi-info-circle" role="button"></i>
+    </span>
+
+    <span
+      class="float-end py-2 ps-1 pe-1"
+      onclick="supervised_analytics.delete_trained_model(
+        '{{ model.instance_name|escapejs }}',
+        '{{ model.pk }}'
+      )"
+    >
+      <i class="bi bi-x-lg" style="color:red" role="button"></i>
+    </span>
+
+    {% include "analytics/modal_metadata.html" %}
+  </div>
+  {% endfor %}
+</div>

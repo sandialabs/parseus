@@ -1,0 +1,1113 @@
+// Include bootstrap functions
+@import "../node_modules/bootstrap/scss/functions";
+
+// Include any default variable overrides here
+$primary:                           #3482f7;
+$text:                              #fffaf2;
+
+$body-color-dark:                   $text;
+$body-bg-dark:                      #131416;
+$body-secondary-bg-dark:            #202326;
+$body-tertiary-bg-dark:             #2f3337;
+$border-color-dark:                 #383d42;
+
+$navbar-bg:                         $body-secondary-bg-dark;
+
+$accordion-padding-x:               0.5rem;
+$accordion-padding-y:               0.5rem;
+$accordion-bg:                      $body-secondary-bg-dark;
+$accordion-button-bg:               $body-tertiary-bg-dark;
+$accordion-button-active-bg:        $body-tertiary-bg-dark;
+$accordion-button-active-color:     $text;
+$accordion-icon-color-dark:         $text;
+$accordion-icon-active-color-dark:  $text;
+
+// Include Bootstrap stylesheets
+@import "../node_modules/bootstrap/scss/bootstrap";
+
+// Add additional custom code here
+body {
+    font-family: Georgia, serif;
+}
+
+.min-h-0 {
+    min-height: 0 !important;
+}
+
+.min-w-0 {
+    min-width: 0 !important;
+}
+
+.btn-primary {
+    @include button-variant(
+        $background: $primary,
+        $border: $primary,
+        $color: $text,
+        $hover-background: shade-color($primary, 15%),
+        $hover-border: shade-color($primary, 20%),
+        $hover-color: $text,
+        $active-background: shade-color($primary, 25%),
+        $active-border: shade-color($primary, 30%),
+        $active-color: $text,
+        $disabled-color: $text,
+    );
+}
+
+// Scoped active nav-link fallback. Detailed navbar styling lives in .parseus-nav-link.active.
+.nav-link.active:not(.parseus-nav-link) {
+    background-color: $primary;
+    color: rgba(255,250,242,0.65) !important;
+    -webkit-text-stroke: 1px;
+}
+
+.invalid {
+  border-bottom: 1px solid red;
+  background-color: rgba(214,64,69,0.23);
+}
+
+// Override flatpickr theme colors
+.flatpickr-calendar {
+    background-color: $body-tertiary-bg-dark;
+    box-shadow: 1px 0 0 rgba(255, 255, 255, 0.5), -1px 0 0 rgba(255, 255, 255, 0.5), 0 1px 0 rgba(255, 255, 255, 0.5), 0 -1px 0 rgba(255, 255, 255, 0.5), 0 3px 13px rgba(0,0,0,0.08);
+  }
+.flatpickr-calendar.arrowBottom::after {
+    border-top-color: #fff;
+}
+.flatpickr-month { 
+  //fix corners
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+.flatpickr-month, 
+.flatpickr-monthDropdown-months, 
+.flatpickr-time input:hover,
+.flatpickr-weekday {
+    background-color: $body-secondary-bg-dark !important;
+}
+
+.flatpickr-weekdays {
+  background: $body-secondary-bg-dark;
+}
+.flatpickr-day.inRange {
+    background: $body-secondary-bg-dark;
+    border-color: $body-secondary-bg-dark;
+    box-shadow: -5px 0 0 $body-secondary-bg-dark, 5px 0 0 $body-secondary-bg-dark;
+}
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange,
+.flatpickr-day.selected.inRange,
+.flatpickr-day.startRange.inRange,
+.flatpickr-day.endRange.inRange,
+.flatpickr-day.selected:focus,
+.flatpickr-day.startRange:focus,
+.flatpickr-day.endRange:focus,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover,
+.flatpickr-day.selected.prevMonthDay,
+.flatpickr-day.startRange.prevMonthDay,
+.flatpickr-day.endRange.prevMonthDay,
+.flatpickr-day.selected.nextMonthDay,
+.flatpickr-day.startRange.nextMonthDay,
+.flatpickr-day.endRange.nextMonthDay {
+  background: $primary;
+  border-color: $primary;
+}
+.flatpickr-day.selected.startRange + .endRange:not(:nth-child(7n+1)),
+.flatpickr-day.startRange.startRange + .endRange:not(:nth-child(7n+1)),
+.flatpickr-day.endRange.startRange + .endRange:not(:nth-child(7n+1)) {
+  -webkit-box-shadow: -10px 0 0 $primary;
+          box-shadow: -10px 0 0 $primary;
+}
+.flatpickr-time input:hover,
+.flatpickr-time .flatpickr-am-pm:hover,
+.flatpickr-time input:focus,
+.flatpickr-time .flatpickr-am-pm:focus {
+  background: $body-secondary-bg-dark;
+}
+.flatpickr-day.prevMonthDay.inRange,
+.flatpickr-day.nextMonthDay.inRange,
+.flatpickr-day.today.inRange,
+.flatpickr-day.prevMonthDay.today.inRange,
+.flatpickr-day.nextMonthDay.today.inRange,
+.flatpickr-day:hover,
+.flatpickr-day.prevMonthDay:hover,
+.flatpickr-day.nextMonthDay:hover,
+.flatpickr-day:focus,
+.flatpickr-day.prevMonthDay:focus,
+.flatpickr-day.nextMonthDay:focus {
+  background: $body-secondary-bg-dark;
+  border-color: $body-secondary-bg-dark;
+}
+
+.navbar {
+    background-color: $navbar-bg;
+}
+
+:root {
+    --parseus-navbar-bleed: 5rem;
+    --parseus-page-backdrop: transparent;
+}
+
+// Several pages use full-bleed (100vw) backdrops. 100vw includes the width of
+// a vertical scrollbar, so clip horizontal overflow instead of letting it
+// create a permanent horizontal scrollbar.
+html,
+body {
+    overflow-x: clip;
+}
+
+.parseus-main {
+    position: relative;
+    top: calc(-1 * var(--parseus-navbar-bleed));
+    margin-bottom: calc(-1 * var(--parseus-navbar-bleed));
+    padding-top: var(--parseus-navbar-bleed);
+}
+
+.parseus-main::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 100vw;
+    height: var(--parseus-navbar-bleed);
+    transform: translateX(-50%);
+    background: var(--parseus-page-backdrop);
+    background-size: inherit;
+    pointer-events: none;
+}
+
+// Per-page backdrops are not defined here. A page sets --parseus-page-backdrop
+// (and optionally background-size) on `.parseus-main:has(> .its-container)` in
+// its own app stylesheet; the ::before above just paints whatever it is given.
+
+.parseus-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    border-bottom: 1px solid rgba(255, 250, 242, 0.18);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 250, 242, 0.045)),
+        rgba(18, 18, 20, 0.3) !important;
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.14);
+    -webkit-backdrop-filter: blur(10px) saturate(155%);
+    backdrop-filter: blur(10px) saturate(155%);
+
+    &::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -1px;
+        left: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 250, 242, 0.42), rgba(255, 255, 255, 0.22), transparent);
+        pointer-events: none;
+    }
+
+    .container-fluid {
+        gap: 1rem;
+    }
+
+    .navbar-toggler {
+        border-color: rgba(255, 250, 242, 0.2);
+        border-radius: 0.9rem;
+        background-color: rgba(255, 250, 242, 0.09);
+
+        &:focus {
+            box-shadow: 0 0 0 0.2rem rgba(255, 250, 242, 0.16);
+        }
+    }
+
+    .dropdown-menu {
+        overflow: hidden;
+        border: 1px solid rgba(255, 250, 242, 0.14);
+        border-radius: 1rem;
+        background:
+            linear-gradient(180deg, rgba(255, 250, 242, 0.13), rgba(255, 250, 242, 0.045)),
+            rgb(18, 18, 20);
+        box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.24);
+    }
+
+    .dropdown-item {
+        color: rgba(255, 250, 242, 0.82);
+
+        &:hover,
+        &:focus {
+            color: $text;
+            background-color: rgba(255, 250, 242, 0.1);
+        }
+    }
+}
+
+.parseus-brand {
+    margin-right: 1.5rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 1rem;
+    color: $text !important;
+    transition: background-color 160ms ease, transform 160ms ease;
+
+    &:hover {
+        background-color: rgba(255, 250, 242, 0.1);
+        transform: translateY(-1px);
+    }
+}
+
+.parseus-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    margin-right: 0.65rem;
+    border: 1px solid rgba(255, 250, 242, 0.18);
+    border-radius: 1rem;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 250, 242, 0.055)),
+        rgba(255, 250, 242, 0.07);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 0.5rem 1.2rem rgba(0, 0, 0, 0.16);
+}
+
+.parseus-brand-title {
+    letter-spacing: -0.03em;
+}
+
+.parseus-brand-subtitle {
+    color: rgba(255, 250, 242, 0.58);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.parseus-nav-list {
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.parseus-nav-link {
+    position: relative;
+    min-width: 5.35rem;
+    margin: 0;
+    padding: 0.55rem 0.8rem !important;
+    overflow: hidden;
+    border: 1px solid transparent;
+    border-radius: 1rem;
+    color: rgba(255, 250, 242, 0.72) !important;
+    background-color: transparent;
+    font-family: var(--bs-body-font-family);
+    transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+
+    .bi {
+        margin-bottom: 0.15rem;
+        color: rgba(255, 250, 242, 0.68);
+        font-size: 1.15rem;
+        transition: color 160ms ease, transform 160ms ease;
+    }
+
+    .small {
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+    }
+
+    &:hover {
+        color: $text !important;
+        border-color: rgba(255, 250, 242, 0.2);
+        background-color: rgba(255, 250, 242, 0.1);
+        transform: translateY(-1px);
+
+        .bi {
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+    }
+
+    &.active {
+        border-color: rgba(255, 250, 242, 0.28);
+        color: #ffffff !important;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 250, 242, 0.065)),
+            rgba(255, 250, 242, 0.055);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 0.5rem 1.1rem rgba(0, 0, 0, 0.13);
+        -webkit-text-stroke: 0;
+
+        &::after {
+            content: "";
+            position: absolute;
+            right: 1rem;
+            bottom: 0.35rem;
+            left: 1rem;
+            height: 2px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.72), rgba(255, 250, 242, 0.26));
+        }
+
+        .bi {
+            color: #ffffff;
+        }
+    }
+}
+
+.parseus-user-menu {
+    position: relative;
+
+    // Datastore state colours live here (not on the link) so both the pill's dot
+    // and the dropdown's status line can read them; main.js toggles the
+    // is-datastore-* class on the link and :has() lifts it to the menu.
+    --parseus-status-color: rgba(255, 250, 242, 0.45);
+    --parseus-status-bg: rgba(255, 250, 242, 0.1);
+
+    &:has(.is-datastore-online) {
+        --parseus-status-color: #36d399;
+        --parseus-status-bg: rgba(54, 211, 153, 0.18);
+    }
+
+    &:has(.is-datastore-offline) {
+        --parseus-status-color: #ff6b70;
+        --parseus-status-bg: rgba(255, 107, 112, 0.18);
+    }
+}
+
+// Account control (signed in) and Sign in (signed out) share one pill so the
+// navbar's right edge looks the same in both states. Hover/focus only change
+// border and fill; nothing moves and nothing animates continuously.
+.parseus-user-link,
+.parseus-signin-button {
+    gap: 0.6rem;
+    min-height: 2.5rem;
+    padding: 0.4rem 0.85rem !important;
+    border: 1px solid rgba(255, 250, 242, 0.2) !important;
+    border-radius: 999px !important;
+    color: $text !important;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 250, 242, 0.04)),
+        rgba(255, 250, 242, 0.06) !important;
+    font-family: var(--bs-body-font-family);
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    transition: border-color 160ms ease, background-color 160ms ease;
+
+    &:hover,
+    &:focus-visible,
+    &[aria-expanded="true"] {
+        border-color: rgba(255, 250, 242, 0.36) !important;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 250, 242, 0.07)),
+            rgba(255, 250, 242, 0.08) !important;
+    }
+
+    &:focus-visible {
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(52, 130, 247, 0.28);
+    }
+}
+
+// Open menu: the pill picks up the cyan accent used across the settings modal.
+.parseus-user-link[aria-expanded="true"] {
+    border-color: rgba(53, 194, 230, 0.5) !important;
+}
+
+// Datastore state: a plain coloured dot (no animation). Its colour comes from the
+// state class that main.js puts on the link; the full wording is in the dropdown.
+.parseus-user-status-dot {
+    flex: 0 0 auto;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--parseus-status-color);
+    box-shadow: 0 0 0 0.2rem var(--parseus-status-bg);
+}
+
+// Georgia (the brand typeface) at its regular weight: the pill's 600 would be a
+// synthesised bold for Georgia, which renders smeared at this size.
+.parseus-user-name {
+    max-width: 9rem;
+    overflow: hidden;
+    color: #ffffff;
+    font-family: Georgia, serif;
+    font-size: 1rem;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.parseus-user-dropdown {
+    min-width: 15rem;
+    padding: 0.4rem;
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.55rem 0.75rem;
+        border-radius: 0.65rem;
+        font-family: var(--bs-body-font-family);
+        font-size: 0.92rem;
+        transition: background-color 160ms ease, color 160ms ease;
+
+        .bi {
+            color: #35c2e6;
+            font-size: 1rem;
+        }
+    }
+
+    .dropdown-divider {
+        margin: 0.4rem 0.25rem;
+        border-top-color: rgba(255, 250, 242, 0.12);
+    }
+}
+
+.parseus-user-dropdown-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.55rem 0.75rem 0.35rem;
+}
+
+.parseus-user-dropdown-label {
+    color: rgba(255, 250, 242, 0.5);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.parseus-user-dropdown-name {
+    overflow: hidden;
+    color: #ffffff;
+    font-family: Georgia, serif;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.parseus-user-dropdown-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.2rem;
+    color: var(--parseus-status-color);
+    font-family: var(--bs-body-font-family);
+    font-size: 0.8rem;
+}
+
+// Sign out reads as the "leaving" action: a warm tint instead of the cyan icon.
+.parseus-user-dropdown .parseus-signout-item {
+    &:hover,
+    &:focus {
+        color: #ff9a9d;
+        background-color: rgba(255, 107, 112, 0.14);
+    }
+
+    .bi {
+        color: #ff9a9d;
+    }
+}
+
+.parseus-user-chevron {
+    color: rgba(255, 250, 242, 0.5);
+    font-size: 0.7rem;
+    transition: transform 160ms ease;
+}
+
+.parseus-user-link[aria-expanded="true"] .parseus-user-chevron {
+    transform: rotate(180deg);
+}
+
+.parseus-signin-icon {
+    color: rgba(255, 250, 242, 0.8);
+    font-size: 1.05rem;
+}
+
+.parseus-login-modal {
+    .modal-dialog {
+        width: calc(100vw - 2rem);
+        max-width: 58rem;
+    }
+
+    .modal-content {
+        overflow: hidden;
+        border: 1px solid rgba(255, 250, 242, 0.16);
+        border-radius: 1.5rem;
+        color: $text;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 250, 242, 0.045)),
+            rgb(18, 18, 20);
+        box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.38);
+    }
+}
+
+.parseus-login-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 3;
+    padding: 0.65rem;
+    border-radius: 999px;
+    background-color: rgba(255, 250, 242, 0.64);
+    opacity: 0.92;
+    transition: background-color 160ms ease, opacity 160ms ease, transform 160ms ease;
+
+    &:hover,
+    &:focus {
+        background-color: rgba(255, 250, 242, 0.88);
+        opacity: 1;
+        transform: rotate(90deg);
+    }
+}
+
+.parseus-login-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(20rem, 0.95fr);
+    min-height: 33rem;
+}
+
+.parseus-login-hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    padding: 3rem;
+    background:
+        radial-gradient(circle at 24% 20%, rgba(255, 250, 242, 0.2), transparent 7rem),
+        radial-gradient(circle at 78% 25%, rgba(53, 194, 230, 0.22), transparent 12rem),
+        linear-gradient(145deg, rgba(52, 130, 247, 0.52), rgba(19, 20, 22, 0.1) 62%),
+        rgba(52, 130, 247, 0.1);
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(rgba(255, 250, 242, 0.045) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 250, 242, 0.045) 1px, transparent 1px);
+        background-size: 2.25rem 2.25rem;
+        mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.75), transparent 84%);
+        pointer-events: none;
+    }
+}
+
+.parseus-login-orbit {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    width: 13rem;
+    height: 13rem;
+    border: 1px solid rgba(255, 250, 242, 0.14);
+    border-radius: 50%;
+    opacity: 0.86;
+
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 1.7rem;
+        border: 1px solid rgba(255, 250, 242, 0.11);
+        border-radius: inherit;
+    }
+
+    &::after {
+        inset: 3.75rem;
+    }
+
+    span {
+        position: absolute;
+        width: 0.7rem;
+        height: 0.7rem;
+        border-radius: 50%;
+        background: #ffffff;
+        box-shadow: 0 0 1rem rgba(255, 250, 242, 0.7);
+
+        &:nth-child(1) {
+            top: 1.2rem;
+            left: 3rem;
+        }
+
+        &:nth-child(2) {
+            right: 1.4rem;
+            bottom: 4rem;
+            background: #35c2e6;
+        }
+
+        &:nth-child(3) {
+            bottom: 1.2rem;
+            left: 5.25rem;
+            background: $primary;
+        }
+    }
+}
+
+.parseus-login-logo {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 6.25rem;
+    height: 6.25rem;
+    margin-bottom: 1.35rem;
+    border: 1px solid rgba(255, 250, 242, 0.24);
+    border-radius: 1.6rem;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 250, 242, 0.06)),
+        rgba(255, 250, 242, 0.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 1rem 2rem rgba(0, 0, 0, 0.2);
+}
+
+.parseus-login-kicker,
+.parseus-login-title,
+.parseus-login-text,
+.parseus-login-badges {
+    position: relative;
+    z-index: 1;
+}
+
+.parseus-login-kicker {
+    margin-bottom: 0.55rem;
+    color: rgba(255, 250, 242, 0.7);
+    font-family: var(--bs-body-font-family);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.parseus-login-title {
+    max-width: 22rem;
+    margin-bottom: 0.85rem;
+    font-size: 3rem;
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+}
+
+.parseus-login-text {
+    max-width: 25rem;
+    margin-bottom: 1.25rem;
+    color: rgba(255, 250, 242, 0.72);
+    font-family: var(--bs-body-font-family);
+}
+
+.parseus-login-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+
+    span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.45rem 0.7rem;
+        border: 1px solid rgba(255, 250, 242, 0.16);
+        border-radius: 999px;
+        background-color: rgba(255, 250, 242, 0.09);
+        color: rgba(255, 250, 242, 0.86);
+        font-family: var(--bs-body-font-family);
+        font-size: 0.82rem;
+    }
+}
+
+.parseus-login-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem;
+    background: rgba(19, 20, 22, 0.24);
+}
+
+.parseus-login-form-header {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 1.5rem;
+}
+
+.parseus-login-form-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid rgba(255, 250, 242, 0.16);
+    border-radius: 1rem;
+    color: #ffffff;
+    background: rgba(255, 250, 242, 0.09);
+    font-size: 1.4rem;
+}
+
+.parseus-login-form-title {
+    font-size: 1.35rem;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+}
+
+.parseus-login-form-subtitle {
+    color: rgba(255, 250, 242, 0.56);
+    font-family: var(--bs-body-font-family);
+    font-size: 0.85rem;
+}
+
+.parseus-login-field {
+    .form-control {
+        border: 1px solid rgba(255, 250, 242, 0.16);
+        border-radius: 1rem;
+        color: $text;
+        background-color: rgba(255, 250, 242, 0.075);
+        font-family: var(--bs-body-font-family);
+
+        &:focus {
+            border-color: rgba(255, 250, 242, 0.42);
+            background-color: rgba(255, 250, 242, 0.1);
+            box-shadow: 0 0 0 0.2rem rgba(52, 130, 247, 0.2), 0 0.65rem 1.2rem rgba(0, 0, 0, 0.16);
+        }
+    }
+
+    label {
+        color: rgba(255, 250, 242, 0.62);
+        font-family: var(--bs-body-font-family);
+    }
+}
+
+.parseus-login-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 3.15rem;
+    border: 1px solid rgba(255, 250, 242, 0.18);
+    border-radius: 1rem;
+    color: #ffffff;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 250, 242, 0.04)),
+        linear-gradient(135deg, shade-color($primary, 4%), tint-color($primary, 10%));
+    box-shadow: 0 0.85rem 1.5rem rgba(52, 130, 247, 0.2);
+    font-family: var(--bs-body-font-family);
+    font-weight: 700;
+    transition: box-shadow 160ms ease, filter 160ms ease, transform 160ms ease;
+
+    &:hover,
+    &:focus-visible {
+        color: #ffffff;
+        filter: brightness(1.05);
+        box-shadow: 0 1rem 1.8rem rgba(52, 130, 247, 0.28);
+        transform: translateY(-1px);
+    }
+
+    &:disabled {
+        color: rgba(255, 250, 242, 0.72);
+        filter: grayscale(0.2);
+        transform: none;
+    }
+}
+
+.parseus-login-message {
+    min-height: 1.5rem;
+    margin-top: 1rem;
+    color: #ffb4b8;
+    font-family: var(--bs-body-font-family);
+    font-size: 0.9rem;
+}
+
+.parseus-settings-modal {
+    .modal-dialog {
+        max-width: 52rem;
+    }
+
+    .modal-content {
+        overflow: hidden;
+        border: 1px solid rgba(255, 250, 242, 0.16);
+        border-radius: 1.5rem;
+        color: $text;
+        background:
+            radial-gradient(circle at 10% 8%, rgba(54, 179, 126, 0.16), transparent 16rem),
+            radial-gradient(circle at 92% 4%, rgba(53, 194, 230, 0.14), transparent 18rem),
+            rgb(18, 18, 20);
+        box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.38);
+    }
+
+    .form-control,
+    .form-select {
+        border: 1px solid rgba(255, 250, 242, 0.16);
+        border-radius: 0.85rem;
+        color: $text;
+        background-color: rgba(255, 250, 242, 0.075);
+        font-family: var(--bs-body-font-family);
+
+        &:focus {
+            border-color: rgba(255, 250, 242, 0.42);
+            background-color: rgba(255, 250, 242, 0.1);
+            box-shadow: 0 0 0 0.2rem rgba(52, 130, 247, 0.2);
+        }
+
+        &:disabled {
+            border-color: rgba(255, 250, 242, 0.08);
+            color: rgba(255, 250, 242, 0.38);
+            background-color: rgba(255, 250, 242, 0.035);
+        }
+    }
+
+    .form-select {
+        cursor: pointer;
+
+        // The open list is drawn by the browser; this is all it honours.
+        option {
+            color: $text;
+            background-color: #1b1c1f;
+        }
+    }
+
+    .form-floating > label,
+    .form-check-label,
+    .form-text {
+        color: rgba(255, 250, 242, 0.6);
+        font-family: var(--bs-body-font-family);
+    }
+
+    .form-check-input {
+        cursor: pointer;
+
+        &:checked {
+            background-color: $primary;
+            border-color: $primary;
+        }
+    }
+}
+
+.parseus-settings-layout {
+    display: grid;
+    grid-template-columns: minmax(9rem, 11rem) minmax(0, 1fr);
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.parseus-settings-header {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1.25rem 4rem 1.1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 250, 242, 0.1);
+    background: linear-gradient(90deg, rgba(53, 194, 230, 0.1), transparent 70%);
+}
+
+.parseus-settings-header-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.6rem;
+    height: 2.6rem;
+    border: 1px solid rgba(53, 194, 230, 0.34);
+    border-radius: 0.85rem;
+    color: #35c2e6;
+    background: rgba(53, 194, 230, 0.12);
+    font-size: 1.2rem;
+}
+
+.parseus-settings-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.5rem;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+.parseus-settings-subtitle {
+    color: rgba(255, 250, 242, 0.55);
+    font-family: var(--bs-body-font-family);
+    font-size: 0.82rem;
+}
+
+.parseus-settings-pane-title {
+    margin-bottom: 0.15rem;
+    color: #ffffff;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+}
+
+.parseus-settings-pane-text {
+    margin-bottom: 1rem;
+    color: rgba(255, 250, 242, 0.55);
+    font-family: var(--bs-body-font-family);
+    font-size: 0.85rem;
+}
+
+.parseus-settings-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+    color: #ffffff;
+    font-family: var(--bs-body-font-family);
+    font-size: 0.92rem;
+    font-weight: 600;
+
+    .bi {
+        color: #35c2e6;
+    }
+}
+
+.parseus-settings-rail {
+    display: flex;
+    flex-direction: column;
+    align-self: start;
+    gap: 0.5rem;
+}
+
+.parseus-settings-rail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid transparent;
+    border-radius: 0.85rem;
+    color: rgba(255, 250, 242, 0.66);
+    background: transparent;
+    font-family: var(--bs-body-font-family);
+    font-size: 0.9rem;
+    text-align: left;
+    transition: background-color 160ms ease, color 160ms ease;
+
+    &:hover,
+    &:focus-visible {
+        color: #ffffff;
+        background: rgba(255, 250, 242, 0.07);
+    }
+
+    &.active {
+        border-color: rgba(53, 194, 230, 0.34);
+        color: #ffffff;
+        background: rgba(52, 130, 247, 0.18);
+
+        .bi {
+            color: #35c2e6;
+        }
+    }
+}
+
+.parseus-settings-panel {
+    padding: 1rem;
+    border: 1px solid rgba(255, 250, 242, 0.13);
+    border-left: 3px solid rgba(53, 194, 230, 0.5);
+    border-radius: 1rem;
+    background: rgba(255, 250, 242, 0.045);
+    transition: border-color 160ms ease;
+
+    &:focus-within {
+        border-color: rgba(53, 194, 230, 0.34);
+        border-left-color: #35c2e6;
+    }
+}
+
+.parseus-settings-credentials {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin-top: 1rem;
+}
+
+// The navbar collapses behind its toggler below lg (navbar-expand-lg in
+// base.html), so the stacked-menu styling keys off the same breakpoint.
+@media (max-width: 991.98px) {
+    .parseus-navbar .navbar-collapse {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(255, 250, 242, 0.08);
+    }
+
+    .parseus-nav-list {
+        align-items: stretch;
+    }
+
+    .parseus-nav-link {
+        min-width: 100%;
+        flex-direction: row !important;
+        justify-content: flex-start;
+        gap: 0.6rem;
+        text-align: left !important;
+    }
+
+    .parseus-user-menu {
+        width: 100%;
+        margin-top: 0.5rem;
+        margin-left: 0 !important;
+    }
+
+    .parseus-user-link,
+    .parseus-signin-button {
+        justify-content: flex-start;
+        width: 100%;
+        text-align: left !important;
+    }
+
+    .parseus-user-chevron {
+        margin-left: auto;
+    }
+}
+
+@media (max-width: 767.98px) {    .parseus-login-modal .modal-dialog,
+    .parseus-settings-modal .modal-dialog {
+        max-width: calc(100vw - 1rem);
+        margin-right: 0.5rem;
+        margin-left: 0.5rem;
+    }
+
+    .parseus-login-card {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+
+    .parseus-login-title {
+        font-size: 2.25rem;
+    }
+
+    .parseus-login-hero {
+        min-height: 18rem;
+        padding: 2rem;
+    }
+
+    .parseus-login-form {
+        padding: 2rem;
+    }
+
+    .parseus-login-orbit {
+        top: -1.5rem;
+        right: -1.5rem;
+        opacity: 0.48;
+    }
+
+    .parseus-settings-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    .parseus-settings-rail {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .parseus-settings-rail-item {
+        width: auto;
+        flex: 1 0 auto;
+    }
+
+    .parseus-settings-credentials {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+// fix validated switch color
+form.was-validated .form-switch .form-check-input:valid:focus:not(:checked) {
+    --bs-form-switch-bg: #{escape-svg(url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'><circle r='3' fill='rgba(255, 255, 255, 0.25)'/></svg>"))};
+}
+
+.form-control:focus, .form-check-input:focus {
+    border-color: $text;
+    box-shadow: 0 0 0 0.2rem rgba(148, 148, 148, 0.25);
+} 
+
+

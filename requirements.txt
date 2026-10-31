@@ -1,0 +1,30 @@
+# Base runtime dependencies for parseus.
+# Mirrors [project.dependencies] in pyproject.toml. Per-app UI extras
+# (parseus[pei], parseus[analytics]) and dev tools (parseus[dev]) are declared
+# in pyproject.toml, not here.
+
+# ---- Analysis engine (framework-agnostic parseus core) ----
+elasticsearch<9
+numpy
+opensearch-py
+pandas
+hdbscan
+scikit-learn
+joblib
+more_itertools
+deepdiff
+
+# ---- Shared webapp (core Django UI needed by every install) ----
+Django>=5.2,<6
+django_compressor
+django-libsass
+pyyaml
+
+# ---- Async / scheduled task execution ----
+celery
+django-celery-beat
+redis
+
+# ---- Websocket support (available in base) ----
+channels
+daphne

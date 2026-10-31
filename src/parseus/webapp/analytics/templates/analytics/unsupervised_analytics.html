@@ -1,0 +1,120 @@
+{% extends "base.html" %} {% load static %}
+
+{% block title %}Unsupervised Analytics | {{ block.super }}{% endblock %}
+
+{% block custom_styles %}
+<link rel="stylesheet" type="text/css" href="{% static 'vendor/flatpickr/flatpickr.min.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'vendor/flatpickr/themes/dark.css' %}" />
+{% endblock %}
+
+{% block content %}
+<div class="container d-flex flex-column flex-grow-1">
+{% csrf_token %}
+<div class="container">
+  <div class="row mt-4 gx-4">
+    <div class="col-12 col-xl-4 d-flex flex-column">
+      <div class="d-flex flex-column flex-grow-1 rounded border bg-body-secondary m-2">
+        <div class="border-bottom fs-3 px-2 py-1">
+          <i class="bi bi-1-circle"></i>
+          <span> {{analytic_type }} Analytic Models </span>
+        </div>
+        <div id="analytics_list" class="flex-grow-1 border-bottom overflow-auto" style="max-height: 500px">
+          {% include "analytics/analytics_list.html" %}
+        </div>
+        <div class="d-flex flex-column bg-body-tertiary rounded-bottom p-2">
+          
+          {% if analytic_type == "NetworkUnsupervised" %}
+          <div class="input-group mb-2">
+            <span class="input-group-text" id="filter">Filter</span>
+            <input type="text" class="form-control" id="train_ip_filter" placeholder="IP filter (optional)"
+              aria-label="filter" aria-describedby="filter">
+          </div>
+          <div class="input-group mb-2" id="train_dates">
+            <span class="input-group-text" id="time"><i class="bi bi-calendar-week"></i></span>
+            <input class="flatpickr form-control" id="train_start" type="text" aria-describedby="time" ,
+              data-default-date="today">
+            <i class="bi bi-arrow-right px-1" style="margin-top:8px;"></i>
+            <input class="flatpickr form-control" id="train_end" type="text" aria-describedby="time"
+              data-default-date="today">
+            <div class="container">
+              <i class="bi bi-info-circle me-2 text-warning"></i>Leaving date and time unchanged will pull all data
+            </div>
+          </div>
+
+          {% elif analytic_type == "PeatUnsupervised" %}
+          <div class="input-group mb-2">
+            <label class="input-group-text" for="trainSelect">Predict folder:</label>
+            <select class="form-select" id="trainSelect">
+              <option value="">--Loading folders--</option>
+            </select>
+          </div>
+          {% endif %}
+
+          <button type="button" id="train_btn" class="btn btn-primary align-self-end px-4" disabled
+            onclick="unsupervised_analytics.Predict('{{analytic_type }}')">
+            Predict
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-4 d-flex flex-column">
+      <div class="d-flex flex-column flex-grow-1 rounded border bg-body-secondary m-2">
+        <div class="border-bottom fs-3 px-2 py-1">
+          <i class="bi bi-2-circle"></i>
+          Data
+        </div>
+        <div id="data_box" class="flex-grow-1 overflow-y-scroll border-bottom py-1 overflow-auto"
+          style="max-height: 545px">
+          <div class="accordion" id="accordionAlerts"></div>
+          <!--- Prediction results will be dynamically inserted here -->
+        </div>
+        <div class="d-flex flex-column bg-body-tertiary rounded-bottom p-2">
+          <div class="input-group mb-2">
+            <span class="input-group-text" id="outgoing">outgoing index</span>
+            <input id="outgoing_idx" type="text" class="form-control" placeholder="index" aria-label="outgoing"
+              aria-describedby="outgoing" />
+          </div>
+          <button type="button" id="push_unsupervised_results_btn" class="btn btn-primary align-self-end px-4 disabled">
+            Push Results
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}
+
+{% block custom_scripts %}
+<script type="text/javascript" src="{% static 'js/analytics.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/unsupervised_analytics.js' %}"></script>
+<script>
+  const databox = document.getElementById("data_box");
+  const outidx = document.getElementById("outgoing_idx");
+  const trainBoxes = document.querySelectorAll("input[name=train_box]");
+  analytics.uncheckAll()
+</script>
+
+{% if analytic_type == "NetworkUnsupervised" %}
+<script>
+  const trainStartDate = document.getElementById("train_start");
+  const trainEndDate = document.getElementById("train_end");
+  const trainDates = document.getElementById("train_dates");
+  const trainIPFilter = document.getElementById("train_ip_filter");
+</script>
+<script src="{% static 'vendor/flatpickr/flatpickr.min.js' %}"></script>
+<script src="{% static 'js/network_analytics.js' %}"></script>
+<script>
+  network_analytics.train_button_validation();
+  network_analytics.setNetworkTrainListeners();
+  network_analytics.initializeFlatpickr();
+</script>
+
+{% elif analytic_type == "PeatUnsupervised" %}
+<script type="text/javascript" src="{% static 'js/peat_analytics.js' %}"></script>
+<script>  
+    peat_analytics.setPeatTrainListeners();
+    peat_analytics.fetchFolders("trainSelect");
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,15 @@
+/* Graph legend items. The template item in state.html / registers.html is
+   cloned by registers.js (addToLegend). */
+.legend-item {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: stretch;
+  gap: 0.5em;
+}
+
+.legend-item .legend-color {
+  width: 1.5em;
+  height: 1.5em;
+  display: inline-block;
+  border-radius: 2px;
+}

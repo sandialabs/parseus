@@ -1,0 +1,73 @@
+<div class="modal fade" id="peatRunModal" tabindex="-1" aria-labelledby="PeatRunModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content peat-modal-content">
+      <div class="modal-header peat-modal-header">
+        <h5 class="modal-title" id="PeatRunModalTitle">PEAT Run</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="peat-run-form">
+          <div class="form-floating mb-4">
+            <input type="text" class="form-control" id="peat-run-name" placeholder="peat_pull">
+            <label for="peat-run-name">Name (default: peat_pull_YYYYMMDD_HHMMSS)</label>
+          </div>
+          <div class="form-check mx-3" id="peat-run-baseline-div">
+            <input class="form-check-input" id="peat-run-baseline" type="checkbox">
+            <label class="form-check-label" for="peat-run-baseline">Baseline (known-good)</label>
+          </div>
+          <div class="form-check mx-3">
+            <input class="form-check-input" id="peat-run-push" type="checkbox" checked>
+            <label class="form-check-label" for="peat-run-push">Push PEAT results to database</label>
+          </div>
+        </form>
+        <div id="error-display" class="alert alert-danger error mt-3" role="alert" style="display: none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="peat-run-button">Run PEAT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="peatQueueConfirmModal" tabindex="-1" aria-labelledby="peatQueueConfirmModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content peat-modal-content">
+      <div class="modal-header peat-modal-header">
+        <div>
+          <div class="peat-kicker mb-2"><i class="bi-hourglass-split"></i> Targets busy</div>
+          <h5 class="modal-title" id="peatQueueConfirmModalTitle">Queue this PEAT run?</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="d-flex gap-3 align-items-start mb-3">
+          <span class="peat-mini-orb"><i class="bi-lock"></i></span>
+          <div>
+            <p class="lead mb-2" id="peat-queue-confirm-message">One or more selected targets are currently in use.</p>
+            <p class="text-body-secondary mb-0">You can queue this run and PEAT will start it automatically when all selected targets are available.</p>
+          </div>
+        </div>
+        <div class="peat-action-strip p-3">
+          <div class="text-body-secondary small fw-bold text-uppercase mb-2">Busy targets</div>
+          <div id="peat-queue-busy-targets" class="peat-workspace-chips"></div>
+        </div>
+        <div id="peat-queue-error-display" class="alert alert-danger error mt-3" role="alert" style="display: none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="peat-queue-run-button"><i class="bi-hourglass-split me-2"></i>Queue Run</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    ["peatRunModal", "peatQueueConfirmModal"].forEach(function (modalId) {
+      const modalElement = document.getElementById(modalId);
+      if (modalElement && modalElement.parentElement !== document.body) {
+        document.body.appendChild(modalElement);
+      }
+    });
+  });
+</script>

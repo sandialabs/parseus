@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Register Analysis | {{ block.super }}{% endblock %}
+
+{% block custom_styles %}
+<link rel="stylesheet" href="{% static 'css/registers.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container d-flex flex-column flex-grow-1">
+
+{% include "registers/load_data_form.html" %}
+
+<div class="container pb-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex flex-column border rounded bg-body-secondary h-100 overflow-auto p-2">
+
+        <nav>
+          <div class="nav nav-tabs" id="analysis-tab" role="tablist">
+            <button class="nav-link active" id="nav-registers-tab" data-bs-toggle="tab" data-bs-target="#nav-registers"
+              type="button" role="tab" aria-controls="nav-registers" aria-selected="true">
+              <i class="bi-clipboard-data me-1"></i>
+              Registers
+            </button>
+            <button class="nav-link" id="nav-function-codes-tab" data-bs-toggle="tab"
+              data-bs-target="#nav-function-codes" type="button" role="tab" aria-controls="nav-function-codes"
+              aria-selected="false">
+              <i class="bi-broadcast me-1"></i>
+              Function Codes
+            </button>
+          </div>
+        </nav>
+
+        <div class="tab-content" id="analysis-tabContent">
+          <div class="tab-pane fade show active p-2" id="nav-registers" role="tabpanel"
+            aria-labelledby="nav-registers-tab">
+            {% include "registers/register_tab.html" %}
+          </div>
+          <div class="tab-pane fade p-2" id="nav-function-codes" role="tabpanel"
+            aria-labelledby="nav-function-codes-tab">
+            {% include "registers/function_code_tab.html" %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include "registers/helper_template_items.html" %}
+
+</div>
+{% endblock %}
+
+
+{% block custom_scripts %}
+<script src="{% static 'vendor/d3/d3.min.js' %}"></script>
+<script src="{% static 'js/registers.js' %}"></script>
+{% endblock %}

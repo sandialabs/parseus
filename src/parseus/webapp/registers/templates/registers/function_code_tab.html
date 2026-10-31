@@ -1,0 +1,139 @@
+<div id="fcodes-container" class="container">
+
+  <!-- Stats and Conversations -->
+  <div class="row align-items-stretch overflow-hidden" style="height:500px;">
+
+    <!-- Summary STATS - Hides at sizes smaller than md -->
+    <div class="col-12 col-lg-3 d-block pb-4">
+      <div class="d-flex flex-column border rounded bg-body-secondary h-100 overflow-auto p-1"
+        style="max-height:500px;">
+        <div class="p-2">
+          <h6 class="text-body-secondary m-0">
+            <i class="bi-calendar2-week me-2"></i>Timeline
+          </h6>
+          <span id="fc-timeline" class="fs-6 m-0 border-bottom border-2 border-light" data-bs-toggle="tooltip"
+            data-bs-placement="right" data-bs-title=" "></span>
+        </div>
+        <div class="p-2">
+          <h6 class="text-body-secondary m-0">
+            <i class="bi-chat-right-dots me-2"></i>Conversations
+          </h6>
+          <span id="fc-conversations" class="fs-6 m-0"></span>
+        </div>
+        <div class="p-2">
+          <h6 class="text-body-secondary m-0">
+            <i class="bi-stopwatch me-2"></i>Timestamps
+          </h6>
+          <span id="fc-timestamps" class="fs-6 m-0"></span>
+        </div>
+        <div class="p-2">
+          <h6 class="text-body-secondary m-0">
+            <i class="bi-broadcast me-2"></i>Function Codes
+          </h6>
+          <pre id="fc-main-summary-count" class="m-0"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conversations -->
+    <div class="col-12 col-lg-9 pb-4">
+      <div id="registers-panel" class="d-flex flex-column bg-body-secondary rounded border h-100">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between p-2 border-bottom">
+          <!-- Title -->
+          <h3 class="mb-0"><i class="bi-chat-right-dots me-2"></i>Conversations</h3>
+          <!-- Utility buttons -->
+          <div class="btn-group">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+              data-bs-auto-close="outside">
+              <i class="bi-funnel me-2"></i>Filters
+            </button>
+            <form class="dropdown-menu p-2">
+              <div class="form-check">
+                <input id="filter-cip-check" class="fc-filter-check form-check-input" type="checkbox"
+                  data-filter="cip" checked>
+                <label class="form-check-label" for="filter-cip-check">cip</label>
+              </div>
+              <div class="form-check">
+                <input id="filter-dnp3-check" class="fc-filter-check form-check-input" type="checkbox"
+                  data-filter="dnp3" checked>
+                <label class="form-check-label" for="filter-dnp3-check">dnp3</label>
+              </div>
+              <div class="form-check">
+                <input id="filter-mms-check" class="fc-filter-check form-check-input" type="checkbox"
+                  data-filter="mms" checked>
+                <label class="form-check-label" for="filter-mms-check">mms</label>
+              </div>
+              <div class="form-check">
+                <input id="filter-modbus-check" class="fc-filter-check form-check-input" type="checkbox"
+                  data-filter="modbus" checked>
+                <label class="form-check-label" for="filter-modbus-check">modbus</label>
+              </div>
+              <div class="form-check">
+                <input id="filter-s7comm-check" class="fc-filter-check form-check-input" type="checkbox"
+                  data-filter="s7comm" checked>
+                <label class="form-check-label" for="filter-s7comm-check">s7comm</label>
+              </div>
+              <div class="form-check">
+                <input id="filter-selfm-check" class="fc-filter-check form-check-input" type="checkbox"
+                  data-filter="selfm" checked>
+                <label class="form-check-label" for="filter-selfm-check">selfm</label>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="row m-0 flex-grow-1 overflow-hidden">
+          <div id="fc-conversation-list" class="col-6 col-lg-4 h-100 border-end p-2 overflow-auto"
+            style="max-height:500px;"></div>
+          <div id="fc-conversation-summary" class="col h-100 p-2 overflow-auto" style="max-height:500px;"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CHART -->
+  <div id="fc-container" class="flex-grow-1 overflow-hidden p-3" style="aspect-ratio: 4 / 3">
+
+    <div class="row align-items-stretch overflow-hidden h-100">
+      <div class="col-12 h-100 px-2">
+        <div class="d-flex flex-column bg-body-secondary rounded border h-100">
+
+          <!-- filtering options -->
+          <div class="d-flex gap-2 p-2">
+            <span class="fw-bold p-1">Group by</span>
+            <div class="form-check border-secondary">
+              <form id="groupby_form">
+                <div class="input-group">
+                  <input id="numGroupby" type="number" class="form-control" placeholder="1" min="1" required value="1">
+                  <select id="granularityGroupby" class="form-select">
+                    <option value="s">seconds</option>
+                    <option value="m">minutes</option>
+                    <option value="h">hours</option>
+                    <option value="d" selected="selected">days</option>
+                  </select>
+                  <button id="groupby_btn" class="btn btn-outline-secondary" type="submit" form="groupby_form"
+                    disabled>Go</button>
+                </div>
+              </form>
+              <input class="d-none" id="graph_grouped_by" type="text" disabled>
+            </div>
+          </div>
+
+          <!-- chart itself -->
+          <div id="fc-graph" class="chart-container flex-grow-1 w-100 overflow-hidden">
+            <div class="d-flex justify-content-center align-items-center h-100 text-muted">
+              Please select data to load ...
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

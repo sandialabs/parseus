@@ -1,0 +1,54 @@
+.DS_Store
+.pytest_cache
+.cache
+.ipynb_checkpoints
+.idea
+.vscode
+*.egg-info
+__pycache__
+.coverage
+
+# env files that contain keys
+build/certs/
+build/envs/production.env
+build/envs/development.env
+
+# python venv files
+venv/
+.venv/
+parseus_venv
+
+# webapp files
+src/parseus/webapp/dist/
+src/parseus/webapp/node_modules/
+src/parseus/webapp/package-lock.json
+
+# Django migrations are generated per environment and are not tracked
+**/migrations/
+
+# delivery files
+dist/
+delivery/
+delivery.tar
+/parseus/
+parseus.tar.gz
+
+# install files
+/analytic_config.yml
+/certs/
+/envs/
+/state/
+
+# test files
+*.pcap
+*.log
+.counter
+
+# temporary files
+celerybeat-schedule*
+
+# LLM Agent folders
+.claude/
+.codex/
+.opencode-workspace/
+

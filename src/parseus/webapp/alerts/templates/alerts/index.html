@@ -1,0 +1,165 @@
+{% extends "base.html" %} {% load static %}
+{% block title %}Alert Operations | {{ block.super }}{% endblock %}
+{% block custom_styles %}
+<link rel="stylesheet" href="{% static 'css/alerts.css' %}">
+{% endblock %} {% block content %}
+
+<div class="container-fluid px-2 px-lg-3 py-3 d-flex flex-column alerts-page-container">
+  <section class="alerts-shell p-3 p-lg-4 d-flex flex-column flex-grow-1 min-h-0">
+    <div class="alerts-hero p-2 mb-2">
+      <div class="row g-2 g-xl-3 align-items-center">
+        {# Status and actions share one row from xl; the title column widens from xxl so the status card stays roughly in place as the window grows. Below xl the title, status, and actions stack. #}
+        <div class="col-lg-4 col-xl-auto col-xxl-3">
+          <div class="d-flex align-items-center gap-3 min-w-0">
+            <div class="alerts-command-mark"><i class="bi bi-broadcast-pin"></i></div>
+            <div class="min-w-0">
+              <h1 class="h4 fw-bold alerts-title mb-0">Alert Operations</h1>
+              <p class="alerts-muted alerts-compact-copy mb-0">SCPI and Sysmon triage console.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-8 col-xl col-xxl-9 min-w-0">
+          <div class="row g-2 g-xl-3 flex-xl-nowrap">
+            <div class="col-12 alerts-hero-status d-flex align-self-stretch">
+              <div id="alertWatchMode" class="watch-mode-card watch-mode-clear d-flex align-items-center w-100 py-2 pe-2" aria-live="polite">
+                <div class="d-flex align-items-center gap-2 w-100">
+                  <div id="alertWatchModeIcon" class="watch-mode-icon"><i class="bi bi-shield-check"></i></div>
+                  <div class="min-w-0">
+                    <div id="alertWatchModeLabel" class="watch-mode-label">All clear</div>
+                    <div id="alertModeMessage" class="watch-mode-message">No active detections.</div>
+                  </div>
+                  <div class="watch-mode-count ms-auto text-end">
+                    <span id="totalActiveAlertCount">0</span>
+                    <small>active</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 alerts-hero-actions d-flex align-self-stretch">
+              <div class="alerts-action-bar d-flex align-items-center w-100 p-2">
+                <div class="d-grid d-sm-flex flex-sm-wrap align-items-center gap-2 justify-content-sm-end w-100">
+                  <div id="selectedAlertCount" class="alerts-selected-count d-none" role="status" aria-live="polite" aria-label="0 alerts selected">
+                    <span data-selected-alert-count-value>0</span>
+                    <small>selected</small>
+                  </div>
+                  <button id="dismissSelectedButton" class="btn btn-alert-outline" type="button" title="Dismiss only the alerts you have checked" disabled><i class="bi bi-x-circle me-1"></i>Dismiss Selected</button>
+                  <button id="flagAlertButton" class="btn btn-alert-outline" type="button" title="Flag only the alerts you have checked. Flagged alerts stay active." disabled><i class="bi bi-flag-fill me-1"></i>Flag Selected</button>
+                  <span class="alerts-action-divider d-none d-sm-block" aria-hidden="true"></span>
+                  <button id="dismissAllButton" class="btn btn-alert-primary" type="button" title="Dismiss every active alert in both sections, whether or not it is selected"><i class="bi bi-x-circle me-1"></i>Dismiss All</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 flex-grow-1 min-h-0">
+      <div class="col-12 col-xl-9 d-flex flex-column min-h-0">
+        <div class="row g-3 flex-grow-1 min-h-0">
+          <div class="col-12 col-md-6 d-flex flex-column min-h-0">
+            <div id="scpi_range_alerts" class="alert-box no-alerts flex-grow-1 p-3 p-lg-4">
+              <div class="alert-column-header mb-3">
+                <div class="alert-section-topline d-flex justify-content-between align-items-center gap-2 mb-2">
+                  <div class="alerts-kicker mb-0"><i class="bi bi-activity"></i> Instrument telemetry</div>
+                  <div class="alert-section-toolbar alerts-action-bar d-flex align-items-center justify-content-between gap-2" aria-label="SCPI alert section actions">
+                    <div class="alert-section-summary d-flex align-items-center gap-2">
+                      <span id="rangeAlertCount" class="alert-count-pill">0</span>
+                      <span class="alert-section-toolbar-label">active</span>
+                    </div>
+                    <div class="alert-section-controls d-grid d-sm-flex gap-2" role="group" aria-label="SCPI alert selection and clearing">
+                      <button class="btn btn-alert-outline" type="button" data-select-alert-section="scpi_range" aria-label="Select all SCPI alerts"><i class="bi bi-check-square me-1"></i><span>Select All</span></button>
+                      <button class="btn btn-alert-primary" type="button" data-dismiss-alert-section="scpi_range" aria-label="Dismiss all SCPI alerts"><i class="bi bi-x-circle me-1"></i>Dismiss All SCPI</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 min-w-0">
+                  <h2 class="h3 mb-0">SCPI Alerts</h2>
+                </div>
+              </div>
+              <p id="rangeAlertScreen" class="alert-status-line"><strong>Loading alerts...</strong></p>
+              <div id="rangeResults" class="alert-results"></div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6 d-flex flex-column min-h-0">
+            <div id="device-alerts" class="alert-box no-alerts flex-grow-1 p-3 p-lg-4">
+              <div class="alert-column-header mb-3">
+                <div class="alert-section-topline d-flex justify-content-between align-items-center gap-2 mb-2">
+                  <div class="alerts-kicker mb-0"><i class="bi bi-pc-display-horizontal"></i> Endpoint signals</div>
+                  <div class="alert-section-toolbar alerts-action-bar d-flex align-items-center justify-content-between gap-2" aria-label="Sysmon alert section actions">
+                    <div class="alert-section-summary d-flex align-items-center gap-2">
+                      <span id="deviceAlertCount" class="alert-count-pill">0</span>
+                      <span class="alert-section-toolbar-label">active</span>
+                    </div>
+                    <div class="alert-section-controls d-grid d-sm-flex gap-2" role="group" aria-label="Sysmon alert selection and clearing">
+                      <button class="btn btn-alert-outline" type="button" data-select-alert-section="device" aria-label="Select all Sysmon alerts"><i class="bi bi-check-square me-1"></i><span>Select All</span></button>
+                      <button class="btn btn-alert-primary" type="button" data-dismiss-alert-section="device" aria-label="Dismiss all Sysmon alerts"><i class="bi bi-x-circle me-1"></i>Dismiss All Sysmon</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 min-w-0">
+                  <h2 class="h3 mb-0">Sysmon Alerts</h2>
+                  <a class="btn btn-alert-outline alerts-manage-rules-link" href="{% url 'alerts:sysmon_rules' %}" aria-label="Manage Sysmon rules"><i class="bi bi-sliders me-1"></i>Manage Rules</a>
+                </div>
+              </div>
+              <p id="deviceAlertScreen" class="alert-status-line"><strong>Loading alerts...</strong></p>
+              <div id="deviceResults" class="alert-results"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-3 d-flex flex-column min-h-0">
+        <button id="monitorHealthToggle" class="btn btn-alert-outline d-xl-none mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#monitorHealthCollapse" aria-expanded="false" aria-controls="monitorHealthCollapse">
+          <span id="monitorHealthToggleIcon" class="bi bi-chevron-down me-2"></span><span id="monitorHealthToggleText">Show Monitor Status</span>
+        </button>
+
+        <div id="monitorHealthCollapse" class="collapse d-xl-block">
+          <aside class="health-panel p-3">
+            <div class="health-header mb-3">
+              <div class="alerts-kicker mb-2"><i class="bi bi-heart-pulse"></i> Monitoring glance</div>
+              <h2 class="h4 mb-1">System Monitor</h2>
+              <p class="alerts-muted small mb-2">Ingestor and container resource health at a glance. Hover an indicator for details.</p>
+              <p id="healthLastUpdated" class="health-meta mb-0">Last updated: loading...</p>
+            </div>
+
+            <div class="d-flex flex-column gap-2">
+              <div class="health-item">
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                  <div><strong>Sysmon Health</strong><div class="health-meta">Endpoint signal ingestion</div></div>
+                  <div class="d-flex align-items-center gap-2"><span id="healthStatusLabel-logstash" class="health-status-badge">Unknown</span><span id="healthLed-logstash" class="status-led status-unknown" data-bs-toggle="tooltip" data-bs-placement="left" title="Loading status..."></span></div>
+                </div>
+                <div id="healthMessage-logstash" class="small pt-2 alerts-muted">Loading status...</div>
+              </div>
+
+              <div class="health-item">
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                  <div><strong>SCPI Health</strong><div class="health-meta">Instrument telemetry ingestion</div></div>
+                  <div class="d-flex align-items-center gap-2"><span id="healthStatusLabel-gpib" class="health-status-badge">Unknown</span><span id="healthLed-gpib" class="status-led status-unknown" data-bs-toggle="tooltip" data-bs-placement="left" title="Loading status..."></span></div>
+                </div>
+                <div id="healthMessage-gpib" class="small pt-2 alerts-muted">Loading status...</div>
+              </div>
+
+              <div class="health-item">
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                  <div><strong>Disk Storage</strong><div class="health-meta">Container filesystem</div></div>
+                  <div class="d-flex align-items-center gap-2"><span id="healthStatusLabel-disk" class="health-status-badge">Unknown</span><span id="healthLed-disk" class="status-led status-unknown" data-bs-toggle="tooltip" data-bs-placement="left" title="Loading status..."></span></div>
+                </div>
+                <div id="healthMessage-disk" class="small pt-2 alerts-muted">Loading status...</div>
+                <div class="disk-usage-meter mt-2" aria-hidden="true">
+                  <div id="diskUsageFill" class="disk-usage-fill status-unknown"></div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+{% endblock %} {% block custom_scripts %}
+<script src="{% static 'vendor/axios/axios.min.js' %}"></script>
+<script src="{% static 'js/script.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %} {% load static %}
+{% block title %}OT Registers | {{ block.super }}{% endblock %}
+{% block content %}
+<div class="container d-flex flex-column flex-grow-1">
+
+<div
+  class="container px-4 my-5 shadow-sm rounded-5 border-bottom border-top border-primary"
+>
+  <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+    <div class="col-10 col-sm-8 col-lg-6">
+      <img
+        src="{% static 'img/powerplant.png' %}"
+        class="d-block mx-lg-auto img-fluid"
+        alt="A beautiful powerplant"
+        width="700"
+        height="500"
+        loading="lazy"
+        title="Non-copyright, non-AI, hyper-realistic picture of a powerplant."
+      />
+    </div>
+    <div class="col-lg-6">
+      <h1 class="display-5 fw-bold text-body-emphasis lh-1 mb-3">
+        Operational Technology Analysis
+      </h1>
+      <p class="lead">
+        Explore the critical role of registers and function codes in operational
+        technology (OT) protocol analysis. Registers store essential data such
+        as sensor readings and control commands, while function codes dictate
+        device communication actions. Understanding these elements is vital for
+        optimizing performance, troubleshooting issues, and enhancing efficiency
+        in industrial systems.
+      </p>
+      <div class="row justify-content-center">
+        <a
+          href="{% url 'registers:registers' %}"
+          class="btn btn-primary btn-lg col-5 m-1"
+          tabindex="-1"
+          role="button"
+          aria-disabled="true"
+          style="font-family: Georgia"
+        >
+          <i class="bi-play me-1"></i>Start Analysis
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

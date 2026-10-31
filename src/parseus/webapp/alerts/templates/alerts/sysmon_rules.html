@@ -1,0 +1,140 @@
+{% extends "base.html" %} {% load static %}
+{% block title %}Sysmon Rule Deck | {{ block.super }}{% endblock %}
+{% block custom_styles %}
+<link rel="stylesheet" href="{% static 'css/alerts.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-lg-3 py-3 d-flex flex-column alerts-page-container alerts-rules-page-container">
+  <section class="alerts-shell alerts-rules-shell p-3 p-lg-4 d-flex flex-column flex-grow-1">
+    <div class="alerts-hero p-2 p-lg-3 mb-3">
+      <div class="row g-2 g-xl-3 align-items-center">
+        <div class="col-lg-7">
+          <div class="d-flex align-items-center gap-3 min-w-0">
+            <div class="alerts-command-mark"><i class="bi bi-sliders"></i></div>
+            <div class="min-w-0">
+              <div class="alerts-kicker mb-1"><i class="bi bi-shield-lock"></i> Policy console</div>
+              <h1 class="h3 fw-bold alerts-title mb-0">Sysmon Rule Deck</h1>
+              <p class="alerts-muted alerts-compact-copy mb-0">Curate who, what, and when is expected on endpoint signals.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="alerts-action-bar p-2">
+            <div class="d-grid d-sm-flex gap-2 justify-content-lg-end">
+              <a class="btn btn-alert-outline" href="{% url 'alerts:alerts_home' %}"><i class="bi bi-arrow-left me-1"></i>Back to Alerts</a>
+              <a class="btn btn-alert-primary" href="{% url 'alerts:sysmon_rule_create' %}"><i class="bi bi-plus-circle me-1"></i>New Rule</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if messages %}
+    <div class="alerts-rules-flash mb-3">
+      {% for message in messages %}
+      <div class="alerts-rule-toast mb-2"><i class="bi bi-check-circle-fill me-2"></i>{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="row g-3 flex-grow-1 min-h-0">
+      <div class="col-12 col-xl-8 d-flex flex-column min-h-0">
+        <div class="alert-box alerts-rule-panel flex-grow-1 p-3 p-lg-4">
+          <div class="alert-column-header mb-3">
+            <div class="alerts-kicker mb-2"><i class="bi bi-card-checklist"></i> Allow windows</div>
+            <h2 class="h4 mb-1">Active Policy Matrix</h2>
+            <p class="alerts-muted small mb-0">Rules are loaded into Sysmon analytics at run time. A matching value outside its approved window becomes an alert.</p>
+          </div>
+
+          <div class="alerts-rules-table-wrap alert-results">
+            <table class="alerts-rules-table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Signal</th>
+                  <th>Value</th>
+                  <th>Window</th>
+                  <th>Status</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for rule in rules %}
+                <tr>
+                  <td>
+                    <strong>{{ rule.name }}</strong>
+                    <div class="alerts-muted small">{{ rule.timezone }}</div>
+                  </td>
+                  <td><span class="preview-alert-badge">{{ rule.get_analytic_type_display }}</span></td>
+                  <td><code class="alerts-rule-code">{{ rule.match_value }}</code></td>
+                  <td class="alerts-rule-window">
+                    {% if rule.allowed_windows %}
+                    <code>{{ rule.allowed_windows }}</code>
+                    {% else %}
+                    <span class="alerts-muted">Always allowed</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if rule.enabled %}
+                    <span class="health-status-badge status-ok">Enabled</span>
+                    {% else %}
+                    <span class="health-status-badge status-unknown">Disabled</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">
+                    <div class="d-inline-flex gap-2">
+                      <a class="btn btn-alert-outline btn-sm" href="{% url 'alerts:sysmon_rule_update' rule.pk %}"><i class="bi bi-pencil-square me-1"></i>Edit</a>
+                      <form action="{% url 'alerts:sysmon_rule_delete' rule.pk %}" method="post" onsubmit="return confirm('Delete this Sysmon rule?');">
+                        {% csrf_token %}
+                        <button class="btn btn-alert-danger btn-sm" type="submit"><i class="bi bi-trash3 me-1"></i>Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="6">
+                    <div class="alert-empty-state">
+                      <div>
+                        <i class="bi bi-shield-plus"></i>
+                        <strong>No Sysmon rules yet</strong>
+                        <p class="alerts-muted mb-0">Create a rule to allow expected users, IPs, or devices only during approved windows.</p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-4 d-flex flex-column min-h-0">
+        <aside class="health-panel alerts-rules-brief p-3 h-100">
+          <div class="health-header mb-3">
+            <div class="alerts-kicker mb-2"><i class="bi bi-compass"></i> Rule behavior</div>
+            <h2 class="h4 mb-1">Operator Notes</h2>
+            <p class="alerts-muted small mb-0">Schedule-based values should live here, not in the unrestricted known-good YAML lists.</p>
+          </div>
+          <div class="d-flex flex-column gap-2">
+            <div class="health-item">
+              <strong><i class="bi bi-check2-circle me-1"></i>Inside window</strong>
+              <div class="health-meta pt-1">Matching events are treated as expected and no alert is produced.</div>
+            </div>
+            <div class="health-item">
+              <strong><i class="bi bi-exclamation-triangle me-1"></i>Outside window</strong>
+              <div class="health-meta pt-1">The analytic raises a Sysmon alert with rule context attached.</div>
+            </div>
+            <div class="health-item">
+              <strong><i class="bi bi-clock-history me-1"></i>Window format</strong>
+              <div class="health-meta pt-1"><code>[{"days":["mon","thu","fri"],"start":"09:00","end":"17:00"}]</code></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

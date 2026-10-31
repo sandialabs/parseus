@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if object %}Update {{ object.name }}{% else %}Upload PEAT Configuration{% endif %} | {{ block.super }}{% endblock %}
+
+{% block custom_styles %}
+<link rel="stylesheet" href="{% static 'css/peat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="peat-workspace peat-config-workspace">
+  <div class="container px-4 pt-4 peat-breadcrumb">
+    <nav style="--bs-breadcrumb-divider: '>'" aria-label="breadcrumb">
+      <ol class="breadcrumb p-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+          <a class="link-body-emphasis" href="{% url 'peat:home' %}">
+            <i class="bi-house-door-fill"></i>
+          </a>
+        </li>
+        <li class="breadcrumb-item">
+          <a class="link-body-emphasis fw-semibold text-decoration-none" href="{% url 'peat:peatconfig-list' %}">
+            PEAT Configurations
+          </a>
+        </li>
+        {% if object %}
+        <li class="breadcrumb-item">
+          <a class="link-body-emphasis fw-semibold text-decoration-none" href="{% url 'peat:peatconfig-details' object.pk %}">
+            {{ object.name }}
+          </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+          Update Configuration
+        </li>
+        {% else %}
+        <li class="breadcrumb-item active" aria-current="page">
+          Upload Configuration
+        </li>
+        {% endif %}
+      </ol>
+    </nav>
+  </div>
+
+  <div class="container px-4 py-3">
+    <div class="peat-page-header peat-workspace-hero p-4 p-lg-5">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+          <div class="peat-kicker mb-3"><i class="bi-filetype-yml"></i> Configuration setup</div>
+          {% if object %}
+          <h1 class="display-6 fw-bold peat-title mb-3">Update {{ object.name }}</h1>
+          <p class="lead mb-0">Adjust this configuration's metadata and run options while keeping it aligned with the PEAT workflow.</p>
+          {% else %}
+          <h1 class="display-6 fw-bold peat-title mb-3">Upload a PEAT configuration</h1>
+          <p class="lead mb-0">Import a YAML configuration, preview its metadata, and save it to your configuration library.</p>
+          {% endif %}
+        </div>
+        <div class="col-lg-4">
+          <div class="peat-workspace-stat-grid mx-auto ms-lg-auto">
+            <div class="peat-workspace-stat">
+              <i class="bi-file-earmark-arrow-up"></i>
+              <strong>YAML</strong>
+              <span>Load configuration details.</span>
+            </div>
+            <div class="peat-workspace-stat">
+              <i class="bi-card-checklist"></i>
+              <strong>Metadata</strong>
+              <span>Review name and options.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container px-4 pb-5">
+    <div class="peat-panel p-4 p-lg-5">
+      <form method="post" enctype="multipart/form-data" class="peat-form">
+        {% csrf_token %}
+
+        {% if not object %}
+        <div class="peat-form-section mb-4">
+          <div class="d-flex gap-3 align-items-start mb-3">
+            <span class="peat-mini-orb"><i class="bi-upload"></i></span>
+            <div>
+              <h2 class="h4 peat-title mb-1">Configuration file</h2>
+              <p class="text-body-secondary mb-0">Choose a PEAT YAML file. Metadata fields will populate after the file is selected.</p>
+            </div>
+          </div>
+          <label class="form-label fw-bold" for="{{ form.filename.id_for_label }}">PEAT Configuration</label>
+          {{ form.filename }}
+        </div>
+        {% endif %}
+
+        <div class="peat-form-section" id="metadata-inputs" style="display: none">
+          <div class="d-flex gap-3 align-items-start mb-4">
+            <span class="peat-mini-orb"><i class="bi-card-checklist"></i></span>
+            <div>
+              <h2 class="h4 peat-title mb-1">Configuration details</h2>
+              <p class="text-body-secondary mb-0">Confirm the metadata and default run behavior before saving.</p>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-lg-6">
+              <label for="{{ form.name.id_for_label }}" class="form-label fw-bold">{{ form.name.label }}</label>
+              {{ form.name }}
+            </div>
+            <div class="col-lg-6">
+              <label for="{{ form.author.id_for_label }}" class="form-label fw-bold">{{ form.author.label }}</label>
+              {{ form.author }}
+            </div>
+            <div class="col-12">
+              <label for="{{ form.description.id_for_label }}" class="form-label fw-bold">{{ form.description.label }}</label>
+              {{ form.description }}
+            </div>
+            <div class="col-lg-6">
+              <label for="{{ form.debug.id_for_label }}" class="form-label fw-bold">{{ form.debug.label }}</label>
+              {{ form.debug }}
+            </div>
+            <div class="col-lg-6">
+              <div class="peat-check-grid">
+                <div class="peat-form-check">
+                  {{ form.intensive_scan }}
+                  <label for="{{ form.intensive_scan.id_for_label }}" class="form-check-label">{{ form.intensive_scan.label }}</label>
+                </div>
+                <div class="peat-form-check">
+                  {{ form.assume_online }}
+                  <label for="{{ form.assume_online.id_for_label }}" class="form-check-label">{{ form.assume_online.label }}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="peat-action-strip p-3 mt-4">
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            {% if object %}
+            <button type="submit" class="btn btn-primary">
+              <i class="bi-check2 me-2"></i>Update
+            </button>
+            <a href="{% url 'peat:peatconfig-details' object.pk %}" class="btn btn-secondary" role="button">
+              <i class="bi-x-lg me-2"></i>Cancel
+            </a>
+            {% else %}
+            <button type="submit" class="btn btn-primary">
+              <i class="bi-upload me-2"></i>Upload
+            </button>
+            <a href="{% url 'peat:peatconfig-list' %}" class="btn btn-secondary" role="button">
+              <i class="bi-x-lg me-2"></i>Cancel
+            </a>
+            {% endif %}
+          </div>
+        </div>
+    </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block custom_scripts %}
+<script src="{% static 'vendor/js-yaml/js-yaml.min.js' %}"></script>
+{% if object %}
+<script>
+  document.getElementById("metadata-inputs").style.display = "block";
+</script>
+{% else %}
+<script>
+  function update_metadata(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const yamlContent = e.target.result;
+          const data = jsyaml.load(yamlContent); // Parse the YAML content
+
+          // Populate the form fields with data from the YAML file
+          document.getElementById("id_name").value = data.metadata.name || "";
+          document.getElementById("id_description").value =
+            data.metadata.description || "";
+          document.getElementById("id_author").value =
+            data.metadata.author || "";
+          document.getElementById("id_debug").value = data.debug || 0;
+          document.getElementById("id_assume_online").checked =
+            data.assume_online || false;
+          document.getElementById("id_intensive_scan").checked =
+            data.intensive_scan || false;
+        } catch (error) {
+          console.error("Error parsing YAML:", error);
+          toastError("Failed to parse YAML file. Please check the format.", 5000);
+        }
+      };
+      reader.readAsText(file); // Read the file as text
+      document.getElementById("metadata-inputs").style.display = "block";
+    }
+  }
+
+  document
+    .getElementById("id_filename")
+    .addEventListener("change", update_metadata);
+  document.getElementById("id_filename").value = "";
+</script>
+{% endif %}
+{% endblock %}

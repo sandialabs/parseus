@@ -1,0 +1,21 @@
+<div id="delete-model-modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border">
+      <div class="modal-header">
+        <h4 class="fw-light text-break">Delete model?</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group input-group-sm mb-3">
+          <span class="input-group-text">Model</span>
+          <input class="form-control input-group-text overflow-auto" type="text" name="delete-this-model" disabled>
+        </div>
+        <input type="hidden" name="delete-trained-model-pk" disabled>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button id="confirm-delete-model" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>

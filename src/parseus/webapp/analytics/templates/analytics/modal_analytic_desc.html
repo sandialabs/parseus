@@ -1,0 +1,70 @@
+<div id="{{analytic.name}}-{{analytic.model}}-modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border">
+      <div class="modal-header">
+        <h4 class="modal-title fw-light">{{analytic.name}}</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <h4 class="border-bottom">Model</h4>
+          <p class="p-3"> {{analytic.model}}</p>
+        </div>
+        {% if analytic.summary %}
+        <div class="mb-3">
+          <h4 class="border-bottom">Summary</h4>
+          <p class="p-3"> {{analytic.summary}}</p>
+        </div>
+        {% endif %}
+        {% if analytic.detection_logic %}
+        <div class="mb-3">
+          <h4 class="border-bottom">Detection Logic</h4>
+          <p class="p-3"> {{analytic.detection_logic}}</p>
+        </div>
+        {% endif %}
+        {% if analytic.mitre_techniques %}
+        <div class="mb-3">
+          <h4 class="border-bottom">MITRE Techniques</h4>
+          <p class="p-3">
+            {% for technique in analytic.mitre_techniques %}
+            <span class="badge bg-secondary">{{ technique }}</span>
+            {% endfor %}
+          </p>
+        </div>
+        {% endif %}
+        {% if analytic.purdue_levels %}
+        <div class="mb-3">
+          <h4 class="border-bottom">Purdue Levels</h4>
+          <p class="p-3">
+            {% for level in analytic.purdue_levels %}
+            <span class="badge bg-secondary">Level {{ level }}</span>
+            {% endfor %}
+          </p>
+        </div>
+        {% endif %}
+        {% if analytic.labels %}
+        <div class="mb-3">
+          <h4 class="border-bottom">Labels</h4>
+          <p class="p-3">
+            {% for label in analytic.labels %}
+            <span class="badge bg-info text-dark">{{ label }}</span>
+            {% endfor %}
+          </p>
+        </div>
+        {% endif %}
+        {% if analytic.train_desc %}
+        <div class="mb-3">
+          <h4 class="border-bottom">Train Description</h4>
+          <p class="p-3"> {{analytic.train_desc}}</p>
+        </div>
+        {% endif %}
+        {% if analytic.predict_desc %}
+        <div class="mb-3">
+          <h4 class="border-bottom">Predict Description</h4>
+          <p class="p-3"> {{analytic.predict_desc}}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

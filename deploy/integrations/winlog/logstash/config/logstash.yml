@@ -1,0 +1,8 @@
+path.config: /usr/share/logstash/pipeline
+config.reload.automatic: false
+log.level: warn
+api.http.host: 0.0.0.0
+pipeline.ecs_compatibility: disabled
+queue.type: persisted
+queue.max_bytes: 1gb
+dead_letter_queue.enable: true

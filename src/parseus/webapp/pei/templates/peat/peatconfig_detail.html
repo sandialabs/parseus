@@ -1,0 +1,768 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ object.name }} | PEAT Configuration | {{ block.super }}{% endblock %}
+
+{% block custom_styles %}
+<link rel="stylesheet" href="{% static 'css/peat.css' %}">
+<style>
+  @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .rotate { display: inline-block; animation: rotate infinite 3s linear; }
+  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+  .pulse { display: inline-block; animation: pulse 1.5s infinite; }
+  @keyframes peatCtaGlow {
+    0% { box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0.35); }
+    70% { box-shadow: 0 0 0 0.45rem rgba(var(--bs-primary-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0); }
+  }
+  .peat-next-step-strip {
+    border: 1px solid rgba(var(--bs-primary-rgb), 0.3);
+    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.12), rgba(var(--bs-info-rgb), 0.08));
+  }
+  .peat-next-step-kicker {
+    color: var(--bs-primary);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .peat-run-cta:not(:disabled) {
+    animation: peatCtaGlow 2.4s ease-out infinite;
+  }
+  .peat-run-cta i {
+    font-size: 1.05em;
+  }
+  .peat-history-toolbar {
+    padding: 0.9rem;
+    border: 1px solid rgba(255, 250, 242, 0.08);
+    border-radius: 1.1rem;
+    background: rgba(19, 20, 22, 0.26);
+  }
+  .peat-history-tabs {
+    gap: 0.35rem;
+    padding: 0.25rem;
+    border: 1px solid rgba(53, 194, 230, 0.18);
+    border-radius: 999px;
+    background: rgba(52, 130, 247, 0.08);
+  }
+  .peat-history-tabs .nav-link {
+    padding: 0.5rem 0.85rem;
+    border: 0;
+    border-radius: 999px;
+    color: #d8e6ff;
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+  .peat-history-tabs .nav-link.active {
+    color: #ffffff;
+    background: linear-gradient(135deg, rgba(52, 130, 247, 0.78), rgba(53, 194, 230, 0.48));
+    box-shadow: 0 0.45rem 1rem rgba(0, 0, 0, 0.22);
+  }
+  .peat-history-tab-pane {
+    padding-top: 0.85rem;
+  }
+  .peat-history-pane-actions {
+    padding: 0.55rem 0.7rem;
+    border: 1px solid rgba(255, 250, 242, 0.07);
+    border-radius: 0.9rem;
+    background: rgba(255, 250, 242, 0.035);
+  }
+  .peat-history-pane-actions .btn {
+    padding: 0.42rem 0.8rem !important;
+    font-size: 0.86rem;
+  }
+  .peat-history-table {
+    margin-bottom: 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="peat-workspace peat-config-workspace">
+  <div class="container px-4 pt-4 peat-breadcrumb">
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+      <ol class="breadcrumb p-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item"><a class="link-body-emphasis" href="{% url 'peat:home' %}"><i class="bi-house-door-fill"></i></a></li>
+        <li class="breadcrumb-item"><a class="link-body-emphasis fw-semibold text-decoration-none" href="{% url 'peat:peatconfig-list' %}">PEAT Configurations</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object.name }}</li>
+      </ol>
+    </nav>
+  </div>
+
+  <div class="container px-4 py-3">
+    <div class="peat-page-header peat-workspace-hero peat-detail-hero peat-run-focus-header p-4">
+      <div class="d-flex flex-column gap-3">
+        <div class="d-flex flex-column flex-xl-row justify-content-between gap-3 align-items-xl-start">
+          <div>
+            <div class="peat-kicker mb-3"><i class="bi-play-circle"></i> PEAT command center</div>
+            <h1 class="display-6 fw-bold peat-title mb-2">{{ object.name }}</h1>
+            <div class="peat-workspace-chips" aria-label="Configuration run summary">
+              <span><i class="bi-hdd-network"></i> {{ object.hosts.count }} hosts</span>
+              <span><i class="bi-box-arrow-down"></i> {{ object.pulls.count }} pull runs</span>
+              <span><i class="bi-radar"></i> {{ object.scans.count }} scan runs</span>
+            </div>
+          </div>
+          <div class="d-grid gap-2 d-sm-flex align-items-sm-center flex-shrink-0">
+            <a href="{{ object.filename.url }}" class="btn btn-primary" role="button"><i class="bi-file-earmark-arrow-down me-2"></i>Download YAML</a>
+            <a href="{% url 'peat:peatconfig-update' object.pk %}" class="btn btn-secondary" role="button"><i class="bi-gear me-2"></i>Edit Config</a>
+            <button class="btn btn-secondary" type="button" id="config-details-toggle" data-bs-toggle="collapse" data-bs-target="#config-details-collapse" aria-expanded="false" aria-controls="config-details-collapse">
+              <i class="bi-chevron-down me-2"></i>Show Details
+            </button>
+          </div>
+        </div>
+
+        <div class="collapse" id="config-details-collapse">
+          <div class="peat-detail-inline-context peat-detail-collapse-content">
+            <div class="peat-detail-description-card">
+              <div class="peat-detail-meta-card h-100">
+                <i class="bi-card-text"></i>
+                <div>
+                  <span>Description</span>
+                  <p>{{ object.description|default:"No description provided." }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="peat-detail-meta-grid peat-detail-meta-grid-compact peat-detail-inline-meta" aria-label="Configuration context">
+              <div class="peat-detail-meta-card"><i class="bi-person"></i><div><span>Author</span><strong>{{ object.author|default:"Unknown" }}</strong></div></div>
+              <div class="peat-detail-meta-card"><i class="bi-bug"></i><div><span>Debug</span><strong>{{ object.debug }}</strong></div></div>
+              <div class="peat-detail-meta-card"><i class="bi-lightning-charge"></i><div><span>Intensive scan</span><strong>{% if object.intensive_scan %}Enabled{% else %}Disabled{% endif %}</strong></div></div>
+              <div class="peat-detail-meta-card"><i class="bi-wifi"></i><div><span>Assume online</span><strong>{% if object.assume_online %}Enabled{% else %}Disabled{% endif %}</strong></div></div>
+              <div class="peat-detail-meta-card"><i class="bi-calendar-plus"></i><div><span>Created</span><strong><time data-timestamp="{{ object.created|date:'c' }}">{{ object.created }}</time></strong></div></div>
+              <div class="peat-detail-meta-card"><i class="bi-calendar-check"></i><div><span>Updated</span><strong><time data-timestamp="{{ object.updated|date:'c' }}">{{ object.updated }}</time></strong></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container px-4 pb-3">
+    <div class="peat-panel p-3 p-lg-4">
+      <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center mb-3">
+        <div class="d-flex gap-3 align-items-start">
+          <span class="peat-mini-orb"><i class="bi-router"></i></span>
+          <div>
+            <h2 class="h5 peat-title mb-1">Select hosts to run</h2>
+            <p class="text-body-secondary mb-0">Choose target devices, then launch a PEAT scan or PEAT pull against the selected hosts.</p>
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-info rounded-circle" data-bs-toggle="popover" data-bs-placement="left" data-bs-trigger="focus" data-bs-html="true" data-bs-custom-class="peat-help-popover" data-bs-title="PEAT mission control" data-bs-content="<strong>PEAT Scan</strong> is the scout: it checks selected devices and reports what it can see.<br><br><strong>PEAT Pull</strong> is the collector: it gathers artifacts from selected devices and can mark the run as a baseline.<br><br>All devices start selected so you can launch quickly, but you can trim the target list before liftoff.">
+          <i class="bi-stars"></i>
+        </button>
+      </div>
+
+      <form id="device-form">
+        <div class="peat-action-strip peat-next-step-strip p-3 p-lg-4 mb-3">
+          <div class="d-grid gap-3 d-lg-flex align-items-lg-center justify-content-lg-between">
+            <div>
+              <div class="peat-next-step-kicker fw-bold mb-1"><i class="bi-arrow-right-circle me-1"></i>Next step</div>
+              <div class="h5 peat-title mb-1">Run PEAT against the selected hosts</div>
+              <div class="text-body-secondary fw-semibold" id="selected-host-count">0 hosts selected</div>
+            </div>
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-end align-items-sm-center">
+              <button type="button" class="btn btn-secondary btn-lg peat-run-cta" id="scan-button" disabled><i class="bi-radar me-2"></i>Run PEAT Scan</button>
+              <button type="button" class="btn btn-primary btn-lg peat-run-cta" id="pull-button" disabled><i class="bi-box-arrow-down me-2"></i>Run PEAT Pull</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-striped align-middle peat-table">
+            <thead><tr><th><input type="checkbox" id="select-all-devices" aria-label="Select all hosts across all pages" checked></th><th>Name</th><th>IP</th><th>Comment</th><th>Peat Module</th><th></th></tr></thead>
+            <tbody id="device-table-body">
+              {% for host in object.hosts.all %}
+              <tr data-device-row>
+                <td><input type="checkbox" name="device_ids" value="{{ host.pk }}" checked></td>
+                <td>{{ host.label }}</td><td>{{ host.ip }}</td><td>{{ host.comment }}</td><td>{{ host.peat_module }}</td>
+                <td><a class="btn btn-sm btn-outline-secondary" href="{% url 'peat:peatdevice-update' host.pk %}" type="button" aria-disabled="true"><i class="bi-pencil-square me-1"></i>Edit</a></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="peat-empty-state"><i class="bi-router"></i><strong>No hosts are defined yet.</strong><br>Add hosts to this configuration before launching a PEAT scan or PEAT pull.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div id="device-pagination-controls" class="peat-pagination-strip p-3 mt-3">
+          <div class="peat-pagination-layout">
+            <div class="peat-pagination-summary text-body-secondary fw-semibold" id="device-page-summary">Showing hosts</div>
+            <div class="peat-pagination-actions">
+              <div class="peat-pagination-size">
+                <label class="text-body-secondary fw-semibold" for="device-page-size">Rows</label>
+                <select class="form-select form-select-sm peat-pagination-select" id="device-page-size" aria-label="Rows per page">
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="0">All</option>
+                </select>
+              </div>
+              <div class="btn-group peat-pagination-nav" role="group" aria-label="Device pagination">
+                <button type="button" class="btn btn-secondary btn-sm" id="device-page-prev"><i class="bi-chevron-left me-1"></i>Prev</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="device-page-next">Next<i class="bi-chevron-right ms-1"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="container px-4 pb-3 d-none" id="run-history-section">
+    <div class="peat-panel p-3 p-lg-4">
+      <div class="peat-history-toolbar d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center mb-3">
+        <div class="min-w-0">
+          <h2 class="h5 peat-title mb-1"><i class="bi-clock-history me-2"></i>PEAT run history</h2>
+          <p class="text-body-secondary small mb-0">Review runs launched from this configuration and switch between pull and scan results.</p>
+        </div>
+        <ul class="nav nav-pills peat-history-tabs flex-nowrap" id="config-run-history-tabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="pull-history-tab" data-bs-toggle="tab" data-bs-target="#pull-history-pane" type="button" role="tab" aria-controls="pull-history-pane" aria-selected="true">
+              <i class="bi-box-arrow-down me-2"></i>Pulls <span class="badge text-bg-secondary ms-2" id="pull-history-count">0</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="scan-history-tab" data-bs-toggle="tab" data-bs-target="#scan-history-pane" type="button" role="tab" aria-controls="scan-history-pane" aria-selected="false">
+              <i class="bi-radar me-2"></i>Scans <span class="badge text-bg-secondary ms-2" id="scan-history-count">0</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="tab-content" id="config-run-history-content">
+        <div class="tab-pane fade show active peat-history-tab-pane" id="pull-history-pane" role="tabpanel" aria-labelledby="pull-history-tab" tabindex="0">
+          <div class="peat-history-pane-actions d-flex flex-wrap justify-content-between gap-2 align-items-center mb-2">
+            <span class="text-body-secondary small fw-semibold"><i class="bi-box-arrow-down me-1"></i>Configuration pull runs</span>
+            <button type="button" class="btn btn-danger btn-sm" id="pull-delete-button" onclick="peat.peatRunDelete('/peat/pull/', 'pull_run_ids', '#pull-delete-button')" disabled><i class="bi-trash me-2"></i>Remove Selected</button>
+          </div>
+          <form>{% csrf_token %}
+            <div class="table-responsive">
+              <table id="peat-pull-table" class="table table-striped align-middle peat-table peat-history-table">
+                <thead><tr><th>Select</th><th>Status</th><th>Devices</th><th>Name</th><th>Actions</th></tr></thead>
+                <tbody id="peat-pull-body"></tbody>
+              </table>
+            </div>
+          </form>
+        </div>
+        <div class="tab-pane fade peat-history-tab-pane" id="scan-history-pane" role="tabpanel" aria-labelledby="scan-history-tab" tabindex="0">
+          <div class="peat-history-pane-actions d-flex flex-wrap justify-content-between gap-2 align-items-center mb-2">
+            <span class="text-body-secondary small fw-semibold"><i class="bi-radar me-1"></i>Configuration scan runs</span>
+            <button type="button" class="btn btn-danger btn-sm" id="scan-delete-button" onclick="peat.peatRunDelete('/peat/scan/', 'scan_run_ids', '#scan-delete-button')" disabled><i class="bi-trash me-2"></i>Remove Selected</button>
+          </div>
+          <form>{% csrf_token %}
+            <div class="table-responsive">
+              <table id="peat-scan-table" class="table table-striped align-middle peat-table peat-history-table">
+                <thead><tr><th>Select</th><th>Status</th><th>Devices</th><th>Name</th><th>Actions</th></tr></thead>
+                <tbody id="peat-scan-body"></tbody>
+              </table>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container px-4 pb-5 d-none" id="log-section">
+    <div class="peat-panel p-3 p-lg-4">
+      <div class="d-flex flex-column flex-md-row justify-content-between gap-2 align-items-md-center">
+        <div>
+          <h2 class="h5 peat-title mb-1"><i class="bi-terminal me-2"></i>Live log</h2>
+          <p class="text-body-secondary mb-md-0" id="log-section-description">Watch live output for running PEAT operations.</p>
+        </div>
+        <button class="btn btn-secondary" type="button" id="log-stream-button" data-bs-toggle="collapse" data-bs-target="#log-stream-collapse" aria-expanded="false" aria-controls="log-stream-collapse">
+          <i class="bi-terminal me-2"></i>Show Log
+        </button>
+      </div>
+      <div class="collapse mt-3" id="log-stream-collapse">
+        <div class="peat-terminal">
+          <div class="peat-terminal-bar" id="log-terminal-bar"><span class="peat-terminal-dot"></span> live PEAT console</div>
+          <div id="log-container" class="peat-terminal-body" run_dir="none"><pre id="log-content" class="mb-0"></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include "peat/peatrun_modal.html" %}
+{% endblock %}
+
+{% block custom_scripts %}
+<script type="text/javascript" src="{% static 'js/peat.js' %}"></script>
+<script>
+  const logContent = document.getElementById('log-content');
+  const logContainer = document.getElementById('log-container');
+  let previousPullData = null;
+  let previousScanData = null;
+  let peatRunMethod = "pull";
+  let deviceCurrentPage = 1;
+  let peatRunSubmitting = false;
+  let pendingQueuePayload = null;
+
+  function peat_run_modal(method) {
+    peatRunMethod = method;
+    const peatElement = document.getElementById("peatRunModal");
+    const peatModal = bootstrap.Modal.getOrCreateInstance(peatElement);
+    const baselineDiv = document.getElementById("peat-run-baseline-div");
+    const modalTitle = document.getElementById("PeatRunModalTitle");
+    if (method === "scan") {
+      modalTitle.textContent = "PEAT Scan Selected Hosts";
+      document.getElementById("peat-run-button").textContent = "Start PEAT Scan";
+      baselineDiv.style.display = "none";
+    } else {
+      modalTitle.textContent = "PEAT Pull Artifacts";
+      document.getElementById("peat-run-button").textContent = "Start PEAT Pull";
+      baselineDiv.style.display = "block";
+    }
+    document.getElementById('error-display').style.display = 'none';
+    peatModal.show();
+  }
+
+  function toggleButtonBasedOnCheckboxes(checkboxSelector, buttonSelector) {
+    $(buttonSelector).prop('disabled', $(checkboxSelector + ':checked').length === 0);
+  }
+
+  function getRunLabel(method) {
+    return method === "scan" ? "scan" : "pull";
+  }
+
+  function initializeTooltips() {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(tooltipTriggerEl => {
+      bootstrap.Tooltip.getOrCreateInstance(tooltipTriggerEl, {
+        boundary: document.body,
+        trigger: 'hover focus'
+      });
+    });
+  }
+
+  function disposeRunDevicePopovers(scopeSelector) {
+    document.querySelectorAll(scopeSelector + ' .peat-devices-popover-toggle').forEach(popoverTriggerEl => {
+      const existingPopover = bootstrap.Popover.getInstance(popoverTriggerEl);
+      if (existingPopover) {
+        existingPopover.dispose();
+      }
+    });
+    document.querySelectorAll('.popover.peat-devices-popover').forEach(popoverEl => popoverEl.remove());
+  }
+
+  function initializeRunDevicePopovers() {
+    document.querySelectorAll('.peat-devices-popover-toggle').forEach(popoverTriggerEl => {
+      bootstrap.Popover.getOrCreateInstance(popoverTriggerEl, {
+        boundary: document.body,
+        container: 'body',
+        customClass: 'peat-devices-popover',
+        html: true,
+        sanitize: false,
+        trigger: 'click'
+      });
+      popoverTriggerEl.addEventListener('shown.bs.popover', function () {
+        document.querySelectorAll('.peat-devices-popover-toggle').forEach(otherTriggerEl => {
+          if (otherTriggerEl !== popoverTriggerEl) {
+            const otherPopover = bootstrap.Popover.getInstance(otherTriggerEl);
+            if (otherPopover) {
+              otherPopover.hide();
+            }
+          }
+        });
+      });
+    });
+  }
+
+  function getRunActions(url, item, method) {
+    return '<div class="btn-group" role="group" aria-label="PEAT ' + getRunLabel(method) + ' run actions">'
+      + peat.runDetailsButton(url, method)
+      + peat.downloadButton(item.status, item.id, item.run_dir, method)
+      + '</div>';
+  }
+
+  function selectHistoryTab(method) {
+    const tabId = method === 'scan' ? 'scan-history-tab' : 'pull-history-tab';
+    const tabEl = document.getElementById(tabId);
+    if (tabEl) {
+      bootstrap.Tab.getOrCreateInstance(tabEl).show();
+    }
+  }
+
+  function updateHistorySectionVisibility() {
+    const pullCount = Array.isArray(previousPullData) ? previousPullData.length : 0;
+    const scanCount = Array.isArray(previousScanData) ? previousScanData.length : 0;
+    document.getElementById('run-history-section').classList.toggle('d-none', pullCount + scanCount === 0);
+    document.getElementById('pull-history-count').textContent = pullCount;
+    document.getElementById('scan-history-count').textContent = scanCount;
+  }
+
+  function renderRunTable(method, data) {
+    const tableBodySelector = method === 'scan' ? '#peat-scan-body' : '#peat-pull-body';
+    const checkboxName = method === 'scan' ? 'scan_run_ids' : 'pull_run_ids';
+    const deleteButtonSelector = method === 'scan' ? '#scan-delete-button' : '#pull-delete-button';
+    const detailUrlTemplate = method === 'scan'
+      ? "{% url 'peat:peatScan-details' 'ITEM_ID' %}"
+      : "{% url 'peat:peatPull-details' 'ITEM_ID' %}";
+    const tableBody = $(tableBodySelector);
+    const runLabel = getRunLabel(method);
+
+    if (data.length === 0) {
+      $(deleteButtonSelector).prop('disabled', true);
+    }
+
+    disposeRunDevicePopovers(tableBodySelector);
+    tableBody.empty();
+    if (data.length === 0) {
+      tableBody.append('<tr><td colspan="5" class="peat-empty-state"><i class="bi-inbox"></i><strong>No PEAT ' + runLabel + ' runs yet.</strong><br>Run a PEAT ' + runLabel + ' against selected hosts to populate this tab.</td></tr>');
+    }
+    data.forEach(item => {
+      if (item.status === "running") {
+        showRunConsole(item, method);
+      }
+      const url = detailUrlTemplate.replace('ITEM_ID', item.id);
+      const row = '<tr><td><input type="checkbox" name="' + checkboxName + '" value="' + item.id + '"></td><td>' + peat.getStatusIcons(item.status) + '</td><td>' + peat.getDevices(item.devices) + '</td><td>' + peat.createRunLink(url, item.name, item.baseline) + '</td><td>' + getRunActions(url, item, method) + '</td></tr>';
+      tableBody.append(row);
+    });
+    $('input[name="' + checkboxName + '"]').change(function () { toggleButtonBasedOnCheckboxes('input[name="' + checkboxName + '"]', deleteButtonSelector); });
+    updateHistorySectionVisibility();
+    initializeTooltips();
+    initializeRunDevicePopovers();
+  }
+
+  function showRunConsole(item, method) {
+    if (!item.run_dir) {
+      return;
+    }
+
+    const runLabel = getRunLabel(method);
+    const logSection = document.getElementById('log-section');
+    const logDescription = document.getElementById('log-section-description');
+    const logTerminalBar = document.getElementById('log-terminal-bar');
+    const logCollapse = document.getElementById('log-stream-collapse');
+    const logButton = document.getElementById('log-stream-button');
+
+    logSection.classList.remove('d-none');
+    logDescription.textContent = 'Live output for the currently running PEAT ' + runLabel + '.';
+    logTerminalBar.innerHTML = '<span class="peat-terminal-dot"></span> live ' + runLabel + ' console';
+    logButton.innerHTML = '<i class="bi-terminal me-2"></i>Show Log';
+
+    bootstrap.Collapse.getOrCreateInstance(logCollapse, { toggle: false }).show();
+
+    if (logContainer.getAttribute('run_dir') !== item.run_dir || logContainer.getAttribute('run_method') !== method) {
+      logContent.textContent = "";
+      peat.peatLogSocket(item.run_dir, method);
+    }
+  }
+
+  function refreshPullTable() {
+    fetch("{% url 'peat:peatrun-objs' 'pull' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+      body: JSON.stringify({ config: "{{ object.pk }}" })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (JSON.stringify(data) !== JSON.stringify(previousPullData)) {
+          previousPullData = data;
+          renderRunTable('pull', data);
+        }
+      })
+      .catch(error => console.error('Error fetching pull items:', error));
+  }
+
+  function refreshScanTable() {
+    fetch("{% url 'peat:peatrun-objs' 'scan' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+      body: JSON.stringify({ config: "{{ object.pk }}" })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (JSON.stringify(data) !== JSON.stringify(previousScanData)) {
+          previousScanData = data;
+          renderRunTable('scan', data);
+        }
+      })
+      .catch(error => console.error('Error fetching scan items:', error));
+  }
+
+  function refreshTable() {
+    refreshPullTable();
+    refreshScanTable();
+  }
+
+  function getDeviceCheckboxes() {
+    return Array.from(document.querySelectorAll('input[name="device_ids"]'));
+  }
+
+  function getSelectedDeviceIds() {
+    return getDeviceCheckboxes().filter(checkbox => checkbox.checked).map(checkbox => checkbox.value);
+  }
+
+  function getDeviceRows() {
+    return Array.from(document.querySelectorAll('#device-table-body tr[data-device-row]'));
+  }
+
+  function getDevicePageSize() {
+    const pageSize = parseInt(document.getElementById('device-page-size').value, 10);
+    return Number.isNaN(pageSize) ? 5 : pageSize;
+  }
+
+  function getTotalDevicePages() {
+    const rows = getDeviceRows();
+    const pageSize = getDevicePageSize();
+    if (pageSize === 0 || rows.length === 0) {
+      return 1;
+    }
+    return Math.ceil(rows.length / pageSize);
+  }
+
+  function renderDevicePage() {
+    const rows = getDeviceRows();
+    const paginationControls = document.getElementById('device-pagination-controls');
+    const pageSummary = document.getElementById('device-page-summary');
+    const previousButton = document.getElementById('device-page-prev');
+    const nextButton = document.getElementById('device-page-next');
+    const pageSize = getDevicePageSize();
+
+    if (rows.length === 0) {
+      paginationControls.style.display = 'none';
+      return;
+    }
+
+    paginationControls.style.display = '';
+
+    if (pageSize === 0) {
+      rows.forEach(row => { row.style.display = ''; });
+      deviceCurrentPage = 1;
+      pageSummary.textContent = 'Showing all ' + rows.length + ' hosts';
+      previousButton.disabled = true;
+      nextButton.disabled = true;
+      return;
+    }
+
+    const totalPages = getTotalDevicePages();
+    deviceCurrentPage = Math.min(Math.max(deviceCurrentPage, 1), totalPages);
+    const startIndex = (deviceCurrentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, rows.length);
+
+    rows.forEach((row, index) => {
+      row.style.display = index >= startIndex && index < endIndex ? '' : 'none';
+    });
+
+    pageSummary.textContent = 'Showing hosts ' + (startIndex + 1) + '-' + endIndex + ' of ' + rows.length + ' · Page ' + deviceCurrentPage + ' of ' + totalPages;
+    previousButton.disabled = deviceCurrentPage <= 1;
+    nextButton.disabled = deviceCurrentPage >= totalPages;
+  }
+
+  function updateRunButtonState() {
+    toggleButtonBasedOnCheckboxes('input[name="device_ids"]', '#pull-button');
+    toggleButtonBasedOnCheckboxes('input[name="device_ids"]', '#scan-button');
+  }
+
+  function updateSelectAllDevicesState() {
+    const selectAll = document.getElementById('select-all-devices');
+    const checkboxes = getDeviceCheckboxes();
+    const checkedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+    selectAll.checked = checkboxes.length > 0 && checkedCount === checkboxes.length;
+    selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+  }
+
+  function updateSelectedHostCount() {
+    const checkedCount = getSelectedDeviceIds().length;
+    const selectedHostCount = document.getElementById('selected-host-count');
+    selectedHostCount.textContent = checkedCount === 1 ? '1 host selected' : checkedCount + ' hosts selected';
+  }
+
+  function buildPeatRunPayload(queueIfBusy) {
+    const device_ids = getSelectedDeviceIds();
+    if (device_ids.length === 0) {
+      toastError('Select at least one host before launching PEAT.', 5000);
+      return null;
+    }
+    const payload = {
+      config: "{{ object.pk }}",
+      device_ids: device_ids,
+      peat_run_name: document.getElementById("peat-run-name").value,
+      peat_run_push: document.getElementById("peat-run-push").checked
+    };
+    if (queueIfBusy) {
+      payload.queue_if_busy = true;
+    }
+    if (peatRunMethod === "pull") {
+      payload.peat_run_baseline = document.getElementById("peat-run-baseline").checked;
+    }
+    return payload;
+  }
+
+  function showQueueConfirmModal(data, payload) {
+    pendingQueuePayload = payload;
+    document.getElementById('peat-queue-confirm-message').textContent = data.message || 'One or more selected targets are currently in use.';
+    document.getElementById('peat-queue-error-display').style.display = 'none';
+    const busyTargets = Array.isArray(data.busy_targets) ? data.busy_targets : [];
+    const busyTargetContainer = document.getElementById('peat-queue-busy-targets');
+    busyTargetContainer.innerHTML = busyTargets.length
+      ? busyTargets.slice(0, 12).map(target => '<span><i class="bi-lock"></i>' + peat.escapeHtml(target) + '</span>').join('')
+      : '<span><i class="bi-lock"></i>Selected PEAT target</span>';
+    if (busyTargets.length > 12) {
+      busyTargetContainer.innerHTML += '<span><i class="bi-three-dots"></i>' + (busyTargets.length - 12) + ' more</span>';
+    }
+    const peatRunElement = document.getElementById('peatRunModal');
+    const showQueueModal = function () {
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('peatQueueConfirmModal')).show();
+    };
+    const peatRunModal = bootstrap.Modal.getInstance(peatRunElement);
+    if (peatRunModal && peatRunElement.classList.contains('show')) {
+      peatRunElement.addEventListener('hidden.bs.modal', showQueueModal, { once: true });
+      peatRunModal.hide();
+    } else {
+      showQueueModal();
+    }
+  }
+
+  function handlePeatRunSuccess(data, queuedForLocks) {
+    const peatModal = bootstrap.Modal.getInstance(document.getElementById("peatRunModal"));
+    const queueModal = bootstrap.Modal.getInstance(document.getElementById("peatQueueConfirmModal"));
+    document.getElementById('error-display').style.display = 'none';
+    document.getElementById('peat-queue-error-display').style.display = 'none';
+    if (peatModal) { peatModal.hide(); }
+    if (queueModal) { queueModal.hide(); }
+    toastSuccess(
+      queuedForLocks
+        ? "PEAT " + getRunLabel(peatRunMethod) + " queued and waiting for targets..."
+        : "PEAT " + getRunLabel(peatRunMethod) + " submitted...",
+      5000
+    );
+    document.getElementById('run-history-section').classList.remove('d-none');
+    selectHistoryTab(peatRunMethod);
+    refreshTable();
+  }
+
+  function submitPeatRun(payload, options) {
+    options = options || {};
+    if (peatRunSubmitting) {
+      return;
+    }
+    const button = options.queue ? document.getElementById('peat-queue-run-button') : document.getElementById('peat-run-button');
+    const originalButtonContent = button.innerHTML;
+    peatRunSubmitting = true;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>' + (options.queue ? 'Queueing' : 'Submitting');
+
+    fetch(peatRunMethod === "pull" ? "{% url 'peat:peat-pull' %}" : "{% url 'peat:peat-scan' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+      body: JSON.stringify(payload)
+    })
+      .then(response => {
+        if (!response.ok) { throw new Error('Network response was not ok'); }
+        return response.json();
+      })
+      .then(data => {
+        const errorDisplay = options.queue ? document.getElementById('peat-queue-error-display') : document.getElementById('error-display');
+        if (data.status) {
+          handlePeatRunSuccess(data, Boolean(data.queued_for_locks));
+        } else if (data.reason === 'targets_busy' && data.can_queue && !options.queue) {
+          showQueueConfirmModal(data, payload);
+        } else {
+          errorDisplay.textContent = data.message;
+          errorDisplay.style.display = 'block';
+          toastError(data.message, 5000);
+        }
+      })
+      .catch(error => {
+        console.error('There was a problem with the fetch operation:', error);
+        const errorDisplay = options.queue ? document.getElementById('peat-queue-error-display') : document.getElementById('error-display');
+        errorDisplay.textContent = error.message || 'Unable to submit this PEAT run.';
+        errorDisplay.style.display = 'block';
+        toastError(error.message || 'Unable to submit this PEAT run.', 5000);
+      })
+      .finally(() => {
+        peatRunSubmitting = false;
+        button.disabled = false;
+        button.innerHTML = originalButtonContent;
+      });
+  }
+
+  function peatRunCall() {
+    const payload = buildPeatRunPayload(false);
+    if (!payload) {
+      return;
+    }
+    submitPeatRun(payload);
+  }
+
+  function queuePeatRunCall() {
+    if (!pendingQueuePayload) {
+      return;
+    }
+    submitPeatRun({ ...pendingQueuePayload, queue_if_busy: true }, { queue: true });
+  }
+
+  $(document).ready(function () {
+    refreshTable();
+    setInterval(refreshTable, 5000);
+    document.querySelectorAll('[data-bs-toggle="popover"]:not(.peat-devices-popover-toggle)').forEach(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
+    document.addEventListener('click', function (event) {
+      const clickedDevicePopover = event.target.closest('.peat-devices-popover');
+      const clickedDevicePopoverToggle = event.target.closest('.peat-devices-popover-toggle');
+      if (!clickedDevicePopover && !clickedDevicePopoverToggle) {
+        document.querySelectorAll('.peat-devices-popover-toggle').forEach(popoverTriggerEl => {
+          const popover = bootstrap.Popover.getInstance(popoverTriggerEl);
+          if (popover) {
+            popover.hide();
+          }
+        });
+      }
+    });
+    initializeTooltips();
+    const configDetailsCollapse = document.getElementById('config-details-collapse');
+    const configDetailsToggle = document.getElementById('config-details-toggle');
+    configDetailsCollapse.addEventListener('show.bs.collapse', function () {
+      configDetailsToggle.innerHTML = '<i class="bi-chevron-up me-2"></i>Hide Details';
+    });
+    configDetailsCollapse.addEventListener('hide.bs.collapse', function () {
+      configDetailsToggle.innerHTML = '<i class="bi-chevron-down me-2"></i>Show Details';
+    });
+    document.getElementById('device-page-size').addEventListener('change', function () {
+      deviceCurrentPage = 1;
+      renderDevicePage();
+    });
+    document.getElementById('device-page-prev').addEventListener('click', function () {
+      deviceCurrentPage -= 1;
+      renderDevicePage();
+    });
+    document.getElementById('device-page-next').addEventListener('click', function () {
+      deviceCurrentPage += 1;
+      renderDevicePage();
+    });
+    $('input[name="device_ids"]').change(function () {
+      updateRunButtonState();
+      updateSelectAllDevicesState();
+      updateSelectedHostCount();
+    });
+    document.getElementById('select-all-devices').addEventListener('change', function () {
+      getDeviceCheckboxes().forEach(checkbox => { checkbox.checked = this.checked; });
+      updateRunButtonState();
+      updateSelectAllDevicesState();
+      updateSelectedHostCount();
+    });
+    getDeviceCheckboxes().forEach(checkbox => { checkbox.checked = true; });
+    updateRunButtonState();
+    updateSelectAllDevicesState();
+    updateSelectedHostCount();
+    renderDevicePage();
+    ["peatRunModal", "peatQueueConfirmModal"].forEach(function (modalId) {
+      document.getElementById(modalId).addEventListener("hidden.bs.modal", function () {
+        peatRunSubmitting = false;
+        document.getElementById("peat-run-button").disabled = false;
+        document.getElementById("peat-queue-run-button").disabled = false;
+        document.body.classList.remove("modal-open");
+        document.body.style.removeProperty("overflow");
+        document.body.style.removeProperty("padding-right");
+        document.querySelectorAll(".modal-backdrop").forEach(backdrop => backdrop.remove());
+      });
+    });
+    document.getElementById("pull-button").addEventListener("click", function () { peat_run_modal("pull"); });
+    document.getElementById("scan-button").addEventListener("click", function () { peat_run_modal("scan"); });
+    document.getElementById("peat-run-button").addEventListener("click", peatRunCall);
+    document.getElementById("peat-queue-run-button").addEventListener("click", queuePeatRunCall);
+    document.getElementById('peat-run-name').addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        peatRunCall();
+      }
+    });
+  });
+</script>
+{% endblock %}

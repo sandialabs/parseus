@@ -1,0 +1,127 @@
+{% extends "base.html" %} {% load static %}
+{% block title %}{{ title }} | {{ block.super }}{% endblock %}
+{% block custom_styles %}
+<link rel="stylesheet" href="{% static 'css/alerts.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-lg-3 py-3 d-flex flex-column alerts-page-container alerts-rules-page-container">
+  <section class="alerts-shell alerts-rules-shell p-3 p-lg-4 d-flex flex-column flex-grow-1">
+    <div class="alerts-hero p-2 p-lg-3 mb-3">
+      <div class="row g-2 g-xl-3 align-items-center">
+        <div class="col-lg-7">
+          <div class="d-flex align-items-center gap-3 min-w-0">
+            <div class="alerts-command-mark"><i class="bi bi-shield-plus"></i></div>
+            <div class="min-w-0">
+              <div class="alerts-kicker mb-1"><i class="bi bi-clock-history"></i> Access window</div>
+              <h1 class="h3 fw-bold alerts-title mb-0">{{ title }}</h1>
+              <p class="alerts-muted alerts-compact-copy mb-0">Shape expected Sysmon behavior into a precise, scheduled allow rule.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="alerts-action-bar p-2">
+            <div class="d-grid d-sm-flex gap-2 justify-content-lg-end">
+              <a class="btn btn-alert-outline" href="{% url 'alerts:sysmon_rules' %}"><i class="bi bi-arrow-left me-1"></i>Back to Rules</a>
+              <button class="btn btn-alert-primary" type="submit" form="sysmon-rule-form"><i class="bi bi-save2 me-1"></i>Save Rule</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 flex-grow-1 min-h-0">
+      <div class="col-12 col-xl-8 d-flex flex-column min-h-0">
+        <div class="alert-box alerts-rule-panel flex-grow-1 p-3 p-lg-4">
+          <div class="alert-column-header mb-3">
+            <div class="alerts-kicker mb-2"><i class="bi bi-pencil-square"></i> Rule editor</div>
+            <h2 class="h4 mb-1">Policy Details</h2>
+            <p class="alerts-muted small mb-0">A matching event is allowed only during the windows below. Outside the window, the analytic triggers.</p>
+          </div>
+
+          <form id="sysmon-rule-form" class="alerts-rule-form" method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alerts-rule-error mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.name.id_for_label }}">Rule name</label>
+                {{ form.name }}
+                <div class="alerts-field-error">{{ form.name.errors }}</div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label" for="{{ form.analytic_type.id_for_label }}">Signal type</label>
+                {{ form.analytic_type }}
+                <div class="alerts-field-error">{{ form.analytic_type.errors }}</div>
+              </div>
+              <div class="col-md-3 d-flex align-items-end">
+                <div class="alerts-enable-card form-check w-100 mb-0">
+                  {{ form.enabled }}
+                  <label class="form-check-label" for="{{ form.enabled.id_for_label }}">Rule enabled</label>
+                </div>
+              </div>
+
+              <div class="col-md-8">
+                <label class="form-label" for="{{ form.match_value.id_for_label }}">Match value</label>
+                {{ form.match_value }}
+                <div class="form-text alerts-muted">User name, source IP, or device ID. Scheduled values should not also be placed in unrestricted known-good YAML lists.</div>
+                <div class="alerts-field-error">{{ form.match_value.errors }}</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="{{ form.timezone.id_for_label }}">Timezone</label>
+                {{ form.timezone }}
+                <div class="form-text alerts-muted">Example: UTC or America/New_York</div>
+                <div class="alerts-field-error">{{ form.timezone.errors }}</div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label" for="{{ form.allowed_windows_json.id_for_label }}">Allowed windows</label>
+                {{ form.allowed_windows_json }}
+                <div class="form-text alerts-muted">{{ form.allowed_windows_json.help_text }}</div>
+                <div class="alerts-field-error">{{ form.allowed_windows_json.errors }}</div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+                {{ form.description }}
+                <div class="alerts-field-error">{{ form.description.errors }}</div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <a class="btn btn-alert-outline" href="{% url 'alerts:sysmon_rules' %}">Cancel</a>
+              <button class="btn btn-alert-primary" type="submit"><i class="bi bi-save2 me-1"></i>Save Rule</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-4 d-flex flex-column min-h-0">
+        <aside class="health-panel alerts-rules-brief p-3 h-100">
+          <div class="health-header mb-3">
+            <div class="alerts-kicker mb-2"><i class="bi bi-radar"></i> Example payload</div>
+            <h2 class="h4 mb-1">Shift Window Recipe</h2>
+            <p class="alerts-muted small mb-0">Use JSON windows to express expected access periods. Empty list means always allowed.</p>
+          </div>
+          <div class="d-flex flex-column gap-2">
+            <div class="health-item">
+              <strong>Monday, Thursday, Friday</strong>
+              <div class="health-meta pt-1">The example below permits a value from 9 AM to 5 PM on those days.</div>
+            </div>
+            <pre class="alerts-rule-example mb-0"><code>[
+  {
+    "days": ["mon", "thu", "fri"],
+    "start": "09:00",
+    "end": "17:00"
+  }
+]</code></pre>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

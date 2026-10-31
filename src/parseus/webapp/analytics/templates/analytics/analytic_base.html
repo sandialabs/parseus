@@ -1,0 +1,108 @@
+{% extends "base.html" %} {% load static %}
+{% block title %}Analytics | {{ block.super }}{% endblock %}
+{% block content %}
+<div class="container d-flex flex-column flex-grow-1">
+<div
+  class="container px-4 my-5 shadow-sm rounded-5 border-bottom border-top border-primary"
+>
+  <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+    <div class="col-12">
+      <div class="border rounded bg-body-tertiary">
+        <div class="fs-3 border-bottom py-1 px-3">Welcome</div>
+        <div class="flex-grow-1 border-bottom p-4">
+          The links below are designed to facilitate the training and prediction
+          of various analytical models organized into columns.
+          <br /><br />
+          1. Available Analytics: Lists models with info buttons for details.
+          Users can configure fields and click Train to initiate training on
+          data from the Malcolm database. (Not used in unsupervised section)
+          <br /><br />
+          2. Trained Analytics: Displays previously trained models. Users can
+          click Predict to make predictions on new data using the selected
+          model.
+          <br /><br />
+          3. Results Display: Shows prediction results as JSON objects
+        </div>
+        <div class="flex-grow-1 border-bottom p-4 card">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <a
+                href="{% url 'analytics:analytics_type' analytic_types='PeatSupervised' %}"
+                class="card-link"
+              >
+                Peat Supervised Analytics
+              </a>
+              <div class="fw-lighter">
+                Run analytics on Peat pull results that require
+                baseline/training data.
+              </div>
+            </li>
+            <li class="list-group-item">
+              <a
+                href="{% url 'analytics:analytics_type' analytic_types='PeatUnsupervised' %}"
+                class="card-link"
+              >
+                Peat Unsupervised Analytics
+              </a>
+              <div class="fw-lighter">
+                Run analytics on Peat pull results that do not require
+                baseline/training data.
+              </div>
+            </li>
+            <hr />
+            <li class="list-group-item">
+              <a
+                href="{% url 'analytics:analytics_type' analytic_types='NetworkSupervised' %}"
+                class="card-link"
+              >
+                Network Supervised Analytics
+              </a>
+              <div class="fw-lighter">
+                Run analytics on network data in Malcolm database that require
+                baseline/training data.
+                <ul>
+                  <li>
+                    Network Anomalies: Identifies odd traffic patterns in
+                    documents ingested by Malcolm.
+                  </li>
+                  <li>
+                    OT Network: Identifies unusual operational technology
+                    function codes in network traffic provided from Zeek/Malcolm
+                    parsers.
+                  </li>
+                  <li>
+                    SCPI: Used regularly in lab equipment. Will require
+                    ingestor provided by the GPIB integration.
+                  </li>
+                </ul>
+              </div>
+            </li>
+            <li class="list-group-item">
+              <a
+                href="{% url 'analytics:analytics_type' analytic_types='NetworkUnsupervised' %}"
+                class="card-link"
+              >
+                Network Unsupervised Analytics
+              </a>
+              <div class="fw-lighter">
+                Run analytics on network data in Malcolm database that do not
+                require baseline/training data.
+                <ul>
+                  <li>
+                    Host Anomalies: Identifies odd traffic patterns in host
+                    patterns ingested by the Winlog/Logstash integration.
+                  </li>
+                </ul>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div
+          class="d-flex justify-content-end p-2 bg-body-secondary rounded-bottom"
+        ></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,154 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - "v*"
+  pull_request:
+
+jobs:
+  pylint:
+    name: pylint
+    runs-on: ubuntu-latest
+
+    container:
+      image: python:3.13
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install system build tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends nodejs npm
+          rm -rf /var/lib/apt/lists/*
+
+      - name: Set up project environment
+        run: |
+          make setup
+          . .venv/bin/activate
+
+      - name: Install pylint
+        run: |
+          . .venv/bin/activate
+          python -m pip install pylint --trusted-host pypi.org --trusted-host files.pythonhosted.org
+
+      - name: Run pylint
+        run: |
+          . .venv/bin/activate
+          python -m pylint --fail-under=7.5 src/parseus
+
+  pytest:
+    name: pytest
+    runs-on: ubuntu-latest
+
+    container:
+      image: python:3.13
+
+    env:
+      DATASTORE_HOST_URL: http://elasticsearch:9200
+      ELASTIC_VERSION: 8.19.5
+
+    services:
+      elasticsearch:
+        image: elasticsearch:8.19.5
+        env:
+          ES_JAVA_OPTS: "-Xms2g -Xmx2g"
+          discovery.type: "single-node"
+          xpack.security.enabled: "false"
+        ports:
+          - 9200:9200
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install system build tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends make git nodejs npm
+          rm -rf /var/lib/apt/lists/*
+
+      - name: Set up project environment
+        run: |
+          make setup
+          . .venv/bin/activate
+
+      - name: Install package and test dependencies
+        run: |
+          . .venv/bin/activate
+          python -m pip install -e .[all,dev] --trusted-host pypi.org --trusted-host files.pythonhosted.org
+
+      - name: Run pytest
+        run: |
+          . .venv/bin/activate
+          python -m pytest -s -vv --cov=parseus --cov-report html --cov-report term tests
+
+      - name: Upload coverage HTML artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: htmlcov
+          path: htmlcov/
+
+  verify-version:
+    name: verify version
+    runs-on: ubuntu-latest
+
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Verify tag version matches pyproject.toml
+        run: |
+          RELEASE_VERSION="${GITHUB_REF_NAME#v}"
+          PROJECT_VERSION="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          test "$RELEASE_VERSION" = "$PROJECT_VERSION"
+
+  verify-release-compose:
+    name: verify release compose
+    runs-on: ubuntu-latest
+
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify compose image versions
+        run: |
+          export PARSEUS_VERSION="${GITHUB_REF_NAME#v}"
+
+          if grep -REn "image:[[:space:]]*parseus:[0-9A-Za-z._-]" compose.build.yaml compose.images.yaml; then
+            echo "Hardcoded parseus image version found in compose files"
+            exit 1
+          fi
+
+          docker compose -f compose.build.yaml config --images | tee build-images.txt
+          docker compose -f compose.images.yaml config --images | tee runtime-images.txt
+
+          grep -qx "parseus:${PARSEUS_VERSION}" build-images.txt
+          grep -qx "parseus:${PARSEUS_VERSION}" runtime-images.txt
+
+          awk -v expected="parseus:${PARSEUS_VERSION}" '
+            index($0, "parseus:") == 1 && $0 != expected {
+              print "Unexpected Parseus image: " $0 " (expected " expected ")"
+              bad=1
+            }
+            END { exit bad }
+          ' build-images.txt runtime-images.txt
+
+          if grep -q "parseus:dev" build-images.txt runtime-images.txt; then
+            echo "Found parseus:dev image in rendered compose config"
+            exit 1
+          fi

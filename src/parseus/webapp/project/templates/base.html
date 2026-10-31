@@ -1,0 +1,148 @@
+{% load static %}
+{% load compress %}
+
+<!DOCTYPE html>
+<html class="vh-100" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    {# Pages override this as "Page name | {{ block.super }}" so the site name stays defined only here. #}
+    <title>{% block title %}Parseus{% endblock %}</title>
+    <link rel="shortcut icon" type="image/png" href="{% static 'img/parseus-icon.png' %}">
+    {# Icons are bundled with the site stylesheet: one render-blocking request instead of two. #}
+    {% compress css %}
+    <link type="text/css" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet" media="screen">
+    <link type="text/x-scss" href="{% static 'scss/styles.scss' %}" rel="stylesheet" media="screen">
+    {% endcompress %}
+    {% block custom_styles %}
+    {% endblock %}
+</head>
+<body class="h-100 d-flex flex-column">
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toasts"></div>
+    {% include "spinner.html" %}
+    <nav class="navbar navbar-expand-lg bg-body-tertiary parseus-navbar">
+        <div class="container-fluid px-3">
+            
+            <a class="navbar-brand parseus-brand" href="{% url 'home' %}">
+                <span class="navbar-brand m-0">
+                    <div class="d-flex justify-content-start align-items-center">
+                        <div class="parseus-brand-mark"><img src="{% static 'img/parseus-icon.png' %}" class="d-block mx-lg-auto img-fluid"
+                            alt="parseus icon" width="42" height="42"></div>
+                        <div>
+                            <div class="fs-3 lh-1 parseus-brand-title">Parseus</div>
+                            <div class="parseus-brand-subtitle">OT analysis workspace</div>
+                        </div>
+                    </div>
+                </span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto parseus-nav-list">
+                    {% for item in parseus_nav_items %}
+                    <li class="nav-item mx-1">
+                        <div class="d-block">
+                            <a href="{% url item.url_name %}" class="nav-link parseus-nav-link d-flex flex-column align-items-center text-center {% if request.resolver_match.namespace == item.namespace %}active{% endif %}">
+                            <span class="{{ item.icon }}"></span>
+                            <span class="small">{{ item.label }}</span>
+                            </a>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="ms-auto parseus-user-menu">
+                    {% if user.is_authenticated %}
+                    {# A <button>, not a .nav-link: main.js marks .nav-link elements whose href matches the page as .active, which applies a text-stroke. #}
+                    <button type="button" class="btn parseus-user-link d-inline-flex align-items-center text-start" id="user-console-button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu and datastore status">
+                        <span class="parseus-user-status-dot" id="user-icon" aria-hidden="true"></span>
+                        <span class="parseus-user-name">{{ user.username }}</span>
+                        <span class="bi bi-chevron-down parseus-user-chevron" aria-hidden="true"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end parseus-user-dropdown" aria-labelledby="user-console-button">
+                        <li class="parseus-user-dropdown-header">
+                            <span class="parseus-user-dropdown-label">Signed in as</span>
+                            <span class="parseus-user-dropdown-name">{{ user.username }}</span>
+                            <span class="parseus-user-dropdown-status">
+                                <span class="parseus-user-status-dot" aria-hidden="true"></span>
+                                <span id="database-status-text" aria-live="polite">Checking datastore</span>
+                            </span>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" id="settings-modal-button" role="button" href="#">
+                                <span class="bi bi-gear" aria-hidden="true"></span>
+                                <span>Settings</span>
+                            </a>
+                        </li>
+                        <li>
+                            <form action="{% url 'logout' %}" method="post" class="m-0">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.path }}">
+                                <button class="dropdown-item parseus-signout-item" type="submit">
+                                    <span class="bi bi-box-arrow-right" aria-hidden="true"></span>
+                                    <span>Sign out</span>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                    {% else %}
+                    <button type="button" id="login-modal-button" class="btn parseus-signin-button d-inline-flex align-items-center">
+                        <span class="parseus-signin-icon bi bi-person" aria-hidden="true"></span>
+                        <span>Sign in</span>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    {# Edge to edge by design: each app wraps its own content (e.g. .container), keeping layout owned by the app, not this shared base. #}
+    <div class="parseus-main flex-grow-1 d-flex flex-column">
+        {% block content %}
+        {% endblock %}
+    </div>
+    <footer class="bg-body-tertiary text-center py-2 mt-auto border-top">
+      <div class="container">
+        <p class="text-body-secondary mb-0">
+            &copy; Copyright 2026 National Technology &amp; Engineering Solutions of Sandia, LLC (NTESS).
+        </p>
+      </div>
+    </footer>
+    {% include "settings_modal.html" %}
+    {% include "login_modal.html" %}
+
+    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/toast.js' %}"></script>
+    <script src="{% static 'js/datetime.js' %}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => parseusDatetime.hydrateTimestamps());
+    </script>
+
+    {% if user.is_authenticated %}
+    <script type="module">
+        import {getDatabaseStatus, settings_modal} from "{% static 'js/main.js' %}";
+        document.getElementById("settings-modal-button").addEventListener("click", (event) => {
+            event.preventDefault();
+            settings_modal();
+        });
+        getDatabaseStatus();
+        setInterval(getDatabaseStatus, 10000);
+        // getDatabaseStatus() is a no-op while hidden, so catch up on return.
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) getDatabaseStatus();
+        });
+    </script>
+    {% else %}
+    <script type="module">
+        import {login_modal} from "{% static 'js/main.js' %}";
+        document.getElementById("login-modal-button").addEventListener("click", login_modal);
+    </script>
+    {% endif %}
+
+    {% block custom_scripts %}
+    {% endblock %}
+</body>
+</html>

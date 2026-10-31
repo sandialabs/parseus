@@ -1,0 +1,1621 @@
+:root {
+  --alerts-ink: #fffdf5;
+  --alerts-muted: rgba(255, 253, 245, 0.68);
+  --alerts-blue: #0072b2;
+  --alerts-cyan: #56b4e9;
+  --alerts-amber: #e69f00;
+  --alerts-yellow: #f0e442;
+  --alerts-red: #d55e00;
+  --alerts-violet: #cc79a7;
+  /* Shared by the alert card edge, the Alert Mode card edge and each column's
+     top bar so they stay identical. Deliberately NOT colour-only: the bands
+     differ in brightness (light yellow / near-black / mid orange), so the bar
+     stays distinguishable for every kind of colour blindness. The alert-list
+     scrollbar thumb stays flat (see .alert-results::-webkit-scrollbar-thumb)
+     rather than striped, since var() is not reliably honoured inside
+     scrollbar pseudo-elements and a striped thumb repaints on every scroll. */
+  --alerts-hazard-stripe: repeating-linear-gradient(45deg, var(--alerts-yellow) 0 0.32rem, #111827 0.32rem 0.58rem, var(--alerts-red) 0.58rem 0.9rem);
+}
+
+.alerts-page-container.alerts-active-theme {
+  background: none;
+}
+
+.parseus-main:has(> .alerts-page-container) {
+  min-height: 0;
+}
+
+/* Page backdrop painted behind the translucent navbar. The shell
+   (styles.scss) only defines the --parseus-page-backdrop hook; the value for
+   this page lives here. */
+.parseus-main:has(> .alerts-page-container) {
+  --parseus-page-backdrop:
+    radial-gradient(circle at 12% calc(5% + var(--parseus-navbar-bleed)), rgba(0, 114, 178, 0.12), transparent 28rem),
+    radial-gradient(circle at 86% var(--parseus-navbar-bleed), rgba(204, 121, 167, 0.1), transparent 26rem);
+}
+
+/* The navbar is translucent (a dark tint plus backdrop blur), so this gradient
+   starts near-opaque to still read as bright yellow once dimmed, stays bright
+   across the navbar's height, and fades to transparent only at the very
+   bottom so there is no hard seam where the strip meets the page. */
+.parseus-main:has(> .alerts-page-container.alerts-active-theme) {
+  --parseus-page-backdrop:
+    linear-gradient(180deg, rgba(255, 236, 80, 0.95) 0%, rgba(240, 190, 20, 0.85) 45%, rgba(230, 159, 0, 0.5) 80%, transparent 100%);
+}
+
+/* While alerts are active, carry the warning colour onto the navbar itself and
+   let it glow outward onto the page beneath (the navbar's z-index puts its
+   box-shadow above the content below it). Static on purpose: the theme must
+   switch back instantly when alerts clear, with nothing flashing. Specificity
+   (0,3,1) beats the shell's plain .parseus-navbar (0,1,0), independent of
+   stylesheet load order. */
+body:has(.alerts-page-container.alerts-active-theme) .parseus-navbar {
+  border-bottom-color: rgba(255, 236, 80, 0.9);
+  box-shadow:
+    0 0 0.5rem 0 rgba(255, 236, 80, 0.75),
+    0 0.35rem 1.5rem 0 rgba(240, 190, 20, 0.6),
+    0 0.9rem 3.5rem 0 rgba(230, 159, 0, 0.4);
+}
+
+body:has(.alerts-page-container.alerts-active-theme) .parseus-navbar::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 244, 150, 1), rgba(255, 220, 60, 0.9), transparent);
+}
+
+/* The dashboard page is bounded to the viewport (its columns scroll
+   internally), so its wrapper gets zero intrinsic height and just takes the
+   space the flex column gives it. The rules pages are ordinary scrolling
+   pages and only need min-height: 0 above. Keyed off the page's own
+   container rather than a class passed from base.html, so base.html does not
+   need to know about this app. */
+.parseus-main:has(> .alerts-page-container:not(.alerts-rules-page-container)) {
+  height: 0;
+  overflow: visible;
+}
+
+.alerts-page-container {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: visible;
+}
+
+.alerts-shell {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(255, 250, 242, 0.08);
+  border-radius: 2rem;
+  color: var(--alerts-ink);
+  /* Flat fallback only. The gradients live on ::before so they get their own
+     compositor layer instead of being re-rasterized on this box's full
+     viewport-sized area whenever content inside repaints. isolation keeps
+     that z-index:-1 layer between this background and the shell's content. */
+  background-color: rgb(40, 43, 47);
+  isolation: isolate;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.28);
+}
+
+.alerts-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  will-change: transform;
+  background:
+    radial-gradient(circle at top left, rgba(0, 114, 178, 0.18), transparent 26rem),
+    radial-gradient(circle at 78% 8%, rgba(204, 121, 167, 0.18), transparent 24rem),
+    radial-gradient(circle at bottom right, rgba(86, 180, 233, 0.06), transparent 24rem),
+    linear-gradient(180deg, rgba(47, 51, 55, 0.98), rgba(32, 35, 38, 0.98));
+}
+
+.alerts-page-container.alerts-active-theme .alerts-shell {
+  outline: 2px solid rgba(240, 228, 66, 0.74);
+  outline-offset: -0.38rem;
+  border-color: rgba(240, 228, 66, 0.68);
+  background-color: rgb(43, 31, 15);
+  box-shadow:
+    0 0 0 1px rgba(230, 159, 0, 0.18),
+    0 1rem 2.5rem rgba(0, 0, 0, 0.32),
+    0 0 3rem rgba(230, 159, 0, 0.22);
+}
+
+.alerts-page-container.alerts-active-theme .alerts-shell::before {
+  background:
+    radial-gradient(circle at top left, rgba(230, 159, 0, 0.34), transparent 26rem),
+    radial-gradient(circle at 78% 10%, rgba(213, 94, 0, 0.22), transparent 24rem),
+    radial-gradient(circle at bottom right, rgba(230, 159, 0, 0.12), transparent 24rem),
+    linear-gradient(180deg, rgba(55, 38, 15, 0.98), rgba(31, 24, 14, 0.98));
+}
+
+.alerts-hero {
+  position: relative;
+  overflow: hidden;
+  flex: 0 0 auto;
+  border: 1px solid rgba(204, 121, 167, 0.24);
+  border-radius: 0.85rem;
+  background:
+    linear-gradient(90deg, rgba(204, 121, 167, 0.16), transparent 34%),
+    linear-gradient(135deg, rgba(16, 18, 28, 0.92), rgba(24, 20, 35, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 0.65rem 1.35rem rgba(0, 0, 0, 0.16);
+}
+
+.alerts-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--alerts-violet), var(--alerts-cyan), transparent 38%);
+  opacity: 0.52;
+  pointer-events: none;
+}
+
+.alerts-page-container.alerts-active-theme .alerts-hero {
+  border-color: rgba(230, 159, 0, 0.46);
+  background:
+    linear-gradient(90deg, rgba(213, 94, 0, 0.22), transparent 36%),
+    linear-gradient(135deg, rgba(42, 25, 12, 0.94), rgba(26, 17, 12, 0.92));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.065), 0 0.75rem 1.45rem rgba(230, 159, 0, 0.11);
+}
+
+.alerts-page-container.alerts-active-theme .alerts-hero::before {
+  background: linear-gradient(90deg, var(--alerts-red), var(--alerts-amber), transparent 42%);
+  opacity: 0.62;
+}
+
+.alerts-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.alerts-kicker {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.22rem 0.55rem;
+  border: 1px solid rgba(204, 121, 167, 0.34);
+  border-radius: 0.45rem;
+  color: #c7b8ff;
+  background: rgba(204, 121, 167, 0.12);
+  font-family: var(--bs-font-monospace);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+/* Column tags follow their own column's state, not the page's: an empty SCPI
+   column stays blue while the Sysmon column is amber. The Monitoring glance
+   tag sits outside both columns, so it never turns amber. */
+.alert-box.has-alerts .alerts-kicker {
+  border-color: rgba(230, 159, 0, 0.48);
+  color: #ffd18a;
+  background: rgba(230, 159, 0, 0.16);
+}
+
+.alerts-title {
+  letter-spacing: -0.035em;
+}
+
+.alerts-compact-copy {
+  font-size: 0.84rem;
+}
+
+.alerts-command-mark {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  border: 1px solid rgba(204, 121, 167, 0.42);
+  border-radius: 0.7rem;
+  color: #ffffff;
+  background:
+    linear-gradient(135deg, rgba(204, 121, 167, 0.9), rgba(86, 180, 233, 0.52)),
+    #10121c;
+  box-shadow: 0 0.55rem 1rem rgba(0, 0, 0, 0.22), 0 0 1.1rem rgba(204, 121, 167, 0.16);
+  font-size: 1.15rem;
+}
+
+.alerts-page-container.alerts-active-theme .alerts-command-mark {
+  border-color: rgba(230, 159, 0, 0.5);
+  background: linear-gradient(135deg, rgba(213, 94, 0, 0.95), rgba(230, 159, 0, 0.75));
+  box-shadow: 0 0.55rem 1rem rgba(0, 0, 0, 0.22), 0 0 1.25rem rgba(230, 159, 0, 0.24);
+}
+
+.alerts-muted {
+  color: var(--alerts-muted) !important;
+}
+
+.watch-mode-card {
+  position: relative;
+  overflow: hidden;
+  /* The left edge carries the status bar (0.46rem). Padding-left leaves about
+     0.5rem of space between the bar and the icon. It is set here, not with a
+     .p-2 utility, because Bootstrap's padding utilities are !important. */
+  padding-left: 1rem;
+  border: 1px solid rgba(204, 121, 167, 0.28);
+  border-radius: 0.75rem;
+  background:
+    linear-gradient(90deg, rgba(204, 121, 167, 0.1), rgba(11, 15, 23, 0.44)),
+    rgba(11, 15, 23, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 0.55rem 1rem rgba(0, 0, 0, 0.14);
+}
+
+.watch-mode-icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid rgba(86, 180, 233, 0.34);
+  border-radius: 0.6rem;
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(0, 114, 178, 0.92), rgba(86, 180, 233, 0.72));
+  box-shadow: 0 0.45rem 0.9rem rgba(0, 0, 0, 0.22);
+  font-size: 1.05rem;
+}
+
+.watch-mode-label {
+  color: var(--alerts-ink);
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.watch-mode-message {
+  overflow: hidden;
+  color: var(--alerts-muted);
+  font-size: 0.74rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.watch-mode-count span {
+  display: block;
+  color: var(--alerts-ink);
+  font-family: var(--bs-font-monospace);
+  font-size: 1.55rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.watch-mode-count small {
+  display: block;
+  color: var(--alerts-muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.watch-mode-clear {
+  border-color: rgba(86, 180, 233, 0.28);
+}
+
+.watch-mode-clear .watch-mode-label {
+  color: #d8e6ff;
+}
+
+.watch-mode-active {
+  border-color: rgba(240, 228, 66, 0.82);
+  background:
+    radial-gradient(circle at top right, rgba(213, 94, 0, 0.24), transparent 14rem),
+    radial-gradient(circle at bottom left, rgba(230, 159, 0, 0.18), transparent 12rem),
+    rgba(31, 24, 14, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 0.9rem 1.6rem rgba(230, 159, 0, 0.14), 0 0 2rem rgba(213, 94, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Status bar on the card's left edge: calm violet-to-cyan when clear (the same
+   colours as a quiet column's top bar), hazard stripe in alert mode. Same
+   size in both states so the card never shifts when the state changes. */
+.watch-mode-clear::after,
+.watch-mode-active::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.46rem;
+}
+
+.watch-mode-clear::after {
+  background: linear-gradient(180deg, var(--alerts-violet), var(--alerts-cyan));
+}
+
+.watch-mode-active::after {
+  background: var(--alerts-hazard-stripe);
+}
+
+.watch-mode-active .watch-mode-icon {
+  border-color: rgba(240, 228, 66, 0.74);
+  background: linear-gradient(135deg, var(--alerts-red), var(--alerts-yellow));
+  color: #111827;
+}
+
+.watch-mode-active .watch-mode-label,
+.watch-mode-active .watch-mode-count span {
+  color: #ffe2ad;
+}
+
+.alerts-action-bar {
+  border: 1px solid rgba(204, 121, 167, 0.25);
+  border-radius: 0.75rem;
+  background: rgba(11, 15, 23, 0.34);
+}
+
+/* Hero row from xl: the status card has a fixed width so it never resizes the
+   buttons when switching between "All clear" and "ALERT MODE"; the actions
+   bar takes the rest. A tight row shrinks the status card's message
+   (ellipsized) rather than wrapping the action buttons. Below xl both stack
+   full width. */
+@media (min-width: 1200px) {
+  .alerts-hero .row > .alerts-hero-status {
+    flex: 0 1 23rem;
+    width: auto;
+    min-width: 0;
+  }
+
+  .alerts-hero .row > .alerts-hero-actions {
+    flex: 1 0 auto;
+    width: auto;
+  }
+}
+
+/* The top bar reflects every alert on the page; each column's own toolbar
+   reflects only that column. */
+.alerts-page-container.alerts-active-theme .alerts-hero .alerts-action-bar,
+.alert-box.has-alerts .alerts-action-bar {
+  border-color: rgba(230, 159, 0, 0.58);
+  background: linear-gradient(90deg, rgba(230, 159, 0, 0.18), rgba(213, 94, 0, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(230, 159, 0, 0.08), 0 0.75rem 1.5rem rgba(230, 159, 0, 0.08);
+}
+
+.alerts-action-bar .btn {
+  margin: 0;
+  /* Wrap whole buttons onto a new row rather than breaking a label across
+     two lines inside its own button. */
+  white-space: nowrap;
+}
+
+.alerts-selected-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0.38rem 0.62rem;
+  border: 1px solid rgba(86, 180, 233, 0.24);
+  border-radius: 0.55rem;
+  color: rgba(216, 230, 255, 0.82);
+  background: rgba(0, 114, 178, 0.08);
+  font-family: var(--bs-font-monospace);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.alerts-selected-count span {
+  color: var(--alerts-ink);
+  font-size: 0.86rem;
+}
+
+/* Divider separating selection-only actions from the all-alerts action. It
+   uses the same border colors as the outline buttons so it follows the
+   blue (quiet) / amber (active) page theme. */
+.alerts-action-divider {
+  align-self: stretch;
+  flex: 0 0 auto;
+  width: 1px;
+  min-height: 1.5rem;
+  background: rgba(86, 180, 233, 0.36);
+}
+
+.alerts-page-container.alerts-active-theme .alerts-action-divider {
+  background: rgba(230, 159, 0, 0.4);
+}
+
+.alerts-selected-count.has-selection {
+  border-color: rgba(240, 228, 66, 0.58);
+  color: #ffe2ad;
+  background: rgba(230, 159, 0, 0.14);
+  box-shadow: 0 0 0 0.16rem rgba(240, 228, 66, 0.08);
+}
+
+.alerts-selected-count.has-selection span {
+  color: var(--alerts-yellow);
+}
+
+.alerts-shell .btn:not(.btn-close) {
+  border-radius: 0.55rem;
+  padding: 0.42rem 0.72rem;
+  font-size: 0.88rem;
+  font-weight: 850;
+  letter-spacing: 0.01em;
+  box-shadow: 0 0.45rem 0.85rem rgba(0, 0, 0, 0.16);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.alerts-shell .btn:not(.btn-close):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0.85rem 1.35rem rgba(0, 0, 0, 0.26);
+}
+
+.alerts-shell .btn:not(.btn-close):disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-alert-primary {
+  border-color: rgba(86, 180, 233, 0.5);
+  color: #ffffff;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 9rem),
+    linear-gradient(135deg, var(--alerts-blue), var(--alerts-cyan));
+}
+
+.btn-alert-primary:hover,
+.btn-alert-primary:focus-visible {
+  border-color: rgba(86, 180, 233, 0.68);
+  color: #ffffff;
+}
+
+.alerts-page-container.alerts-active-theme .alerts-hero .btn-alert-primary,
+.alert-box.has-alerts .btn-alert-primary {
+  border-color: rgba(230, 159, 0, 0.62);
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 9rem),
+    linear-gradient(135deg, rgba(213, 94, 0, 0.96), rgba(230, 159, 0, 0.9));
+}
+
+.btn-alert-outline {
+  border-color: rgba(86, 180, 233, 0.36);
+  color: #d8e6ff;
+  background: rgba(0, 114, 178, 0.13);
+}
+
+.btn-alert-outline:hover,
+.btn-alert-outline:focus-visible {
+  border-color: rgba(86, 180, 233, 0.68);
+  color: #ffffff;
+  background: rgba(0, 114, 178, 0.22);
+}
+
+.alerts-page-container.alerts-active-theme .alerts-hero .btn-alert-outline,
+.alert-box.has-alerts .btn-alert-outline {
+  border-color: rgba(230, 159, 0, 0.4);
+  color: #ffe2ad;
+  background: rgba(230, 159, 0, 0.12);
+}
+
+.preview-alert-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.45rem;
+  border: 1px solid rgba(86, 180, 233, 0.34);
+  border-radius: 999px;
+  color: #d8e6ff;
+  background: rgba(0, 114, 178, 0.16);
+  font-family: var(--bs-font-monospace);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.alerts-shell > .row.flex-grow-1,
+.alerts-shell > .row.flex-grow-1 .row.flex-grow-1 {
+  min-height: 0;
+  overflow: visible;
+}
+
+.alerts-shell > .row.flex-grow-1 > [class*="col-"],
+.alerts-shell > .row.flex-grow-1 .row.flex-grow-1 > [class*="col-"] {
+  min-height: 0;
+  overflow: visible;
+}
+
+.alert-box {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 250, 242, 0.1);
+  border-radius: 0.95rem;
+  isolation: isolate;
+  color: var(--alerts-ink);
+  /* Flat fallback only. The gradients live on ::after (below) so they sit on
+     their own compositor layer instead of being re-rasterized, under this
+     box's rounded overflow clip, whenever a row inside repaints. isolation
+     (above) keeps that z-index:-1 layer between this background and the
+     column's content. */
+  background-color: rgb(15, 19, 30);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0.85rem 2rem rgba(0, 0, 0, 0.22);
+}
+
+.alert-box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  will-change: transform;
+  background:
+    radial-gradient(circle at top right, rgba(204, 121, 167, 0.13), transparent 18rem),
+    linear-gradient(180deg, rgba(18, 22, 36, 0.95), rgba(11, 15, 23, 0.95));
+}
+
+.alert-box::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 0.24rem;
+  background: linear-gradient(90deg, var(--alerts-violet), var(--alerts-cyan));
+}
+
+.alert-box.has-alerts {
+  border-color: rgba(240, 228, 66, 0.78);
+  background-color: rgb(23, 20, 18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0.85rem 2.25rem rgba(230, 159, 0, 0.12);
+}
+
+.alert-box.has-alerts::after {
+  background:
+    radial-gradient(circle at top right, rgba(230, 159, 0, 0.16), transparent 18rem),
+    radial-gradient(circle at bottom left, rgba(213, 94, 0, 0.08), transparent 16rem),
+    linear-gradient(180deg, rgba(34, 26, 14, 0.98), rgba(11, 15, 23, 0.95));
+}
+
+.alerts-page-container.alerts-active-theme .alert-box.has-alerts {
+  border-color: rgba(240, 228, 66, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(230, 159, 0, 0.16),
+    0 1rem 2.25rem rgba(230, 159, 0, 0.22),
+    0 0 2rem rgba(230, 159, 0, 0.18);
+}
+
+.alert-box.has-alerts::before {
+  height: 0.46rem;
+  background: var(--alerts-hazard-stripe);
+  box-shadow: 0 0 1.35rem rgba(240, 228, 66, 0.48);
+}
+
+.alert-box.has-alerts .alert-column-header h2 {
+  color: #ffe2ad;
+}
+
+.alert-box.no-alerts {
+  border-color: rgba(86, 180, 233, 0.14);
+}
+
+.alert-column-header,
+.health-header {
+  position: relative;
+  z-index: 3;
+}
+
+.alert-section-topline {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.alert-section-topline .alerts-kicker {
+  flex: 0 0 auto;
+}
+
+.alert-section-toolbar {
+  position: relative;
+  z-index: 3;
+  /* Grow to fill the header row (the whole row when it wraps below the tag,
+     the space beside the tag when it fits), so the count sits at the left edge
+     and the buttons at the right edge. */
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 0.35rem !important;
+}
+
+.alert-section-toolbar.alerts-action-bar {
+  padding: 0.28rem;
+  border-radius: 0.58rem;
+}
+
+.alert-section-summary {
+  min-width: 0;
+  gap: 0.35rem !important;
+}
+
+.alert-section-toolbar-label {
+  color: var(--alerts-muted);
+  font-family: var(--bs-font-monospace);
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.alert-section-controls {
+  flex: 0 0 auto;
+  gap: 0.35rem !important;
+}
+
+.alert-section-controls .btn:not(.btn-close) {
+  padding: 0.24rem 0.46rem;
+  border-radius: 0.44rem;
+  font-size: 0.74rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.alerts-manage-rules-link {
+  padding: 0.28rem 0.5rem !important;
+  border-color: rgba(86, 180, 233, 0.26);
+  color: rgba(216, 230, 255, 0.86);
+  background: rgba(0, 114, 178, 0.08);
+  font-size: 0.74rem !important;
+  line-height: 1.1;
+  white-space: nowrap;
+  box-shadow: none !important;
+}
+
+.alerts-manage-rules-link:hover,
+.alerts-manage-rules-link:focus-visible {
+  color: #ffffff;
+  background: rgba(0, 114, 178, 0.16);
+}
+
+.alert-section-controls .btn[aria-pressed="true"] {
+  border-color: rgba(86, 180, 233, 0.72);
+  color: #ffffff;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.14), transparent 6rem),
+    linear-gradient(135deg, rgba(0, 114, 178, 0.78), rgba(86, 180, 233, 0.4));
+}
+
+.has-alerts .alert-section-controls .btn[aria-pressed="true"] {
+  color: #111827;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.24), transparent 5rem),
+    linear-gradient(135deg, var(--alerts-yellow), rgba(230, 159, 0, 0.9));
+}
+
+.alert-count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.85rem;
+  padding: 0.16rem 0.42rem;
+  border-radius: 999px;
+  color: #d8e6ff;
+  background: rgba(0, 114, 178, 0.18);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.has-alerts .alert-count-pill {
+  color: #111827;
+  background: var(--alerts-yellow);
+  box-shadow: 0 0 0 0.18rem rgba(240, 228, 66, 0.16);
+}
+
+.alert-status-line {
+  margin-bottom: 1rem;
+  color: var(--alerts-muted);
+}
+
+/* Collapse the line (and its margin) when there is nothing to report, so the
+   alert list gets the space. It is only populated for loading, error/retry
+   and "showing N newest of M" messages. */
+.alert-status-line:empty {
+  display: none;
+}
+
+.has-alerts .alert-status-line {
+  color: #fffdf5;
+}
+
+.has-alerts .alert-status-line strong {
+  color: var(--alerts-yellow);
+  text-shadow: 0 0 0.85rem rgba(240, 228, 66, 0.24);
+}
+
+.alert-results {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: 0.15rem;
+  padding-right: 0.25rem;
+  scrollbar-gutter: stable;
+}
+
+.alert-message label.alert-card {
+  position: relative;
+  width: 100%;
+  margin: 0 0 0.75rem;
+  padding: 0.85rem 0.9rem;
+  overflow: hidden;
+  border: 1px solid rgba(240, 228, 66, 0.28);
+  border-radius: 0.75rem;
+  color: var(--alerts-ink);
+  /* Kept deliberately faint so a selected card (solid yellow border, much
+     brighter fill) stands out clearly against its unselected neighbours. The
+     hazard stripe on the left edge still marks each card as an active alert.
+     Flat colour, no gradient and no transition: there can be hundreds of
+     these, and per-card gradients/animated shadows made the page slow. */
+  background-color: rgba(230, 159, 0, 0.06);
+  text-align: left;
+  cursor: pointer;
+}
+
+.alert-message label.alert-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.42rem;
+  background: var(--alerts-hazard-stripe);
+}
+
+/* Hover/selected shadows stay within the card's 0.75rem bottom margin and
+   there is no hover translate: .alert-message uses content-visibility, which
+   clips painting to its own box, so anything bigger would be cut off. */
+.alert-message label.alert-card:hover {
+  border-color: rgba(230, 159, 0, 0.62);
+  background-color: rgba(230, 159, 0, 0.16);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.22);
+}
+
+.alert-message label.alert-card:has(.checkbox-alert:checked) {
+  border-color: var(--alerts-yellow);
+  background-color: rgba(230, 159, 0, 0.38);
+  /* Inset rings thicken the 1px border to ~2px; the outer shadow lifts the
+     card off its unselected neighbours. The rings are inset (not outer
+     spread) because content-visibility clips anything outside the card's
+     wrapper. */
+  box-shadow:
+    inset 0 0 0 1px var(--alerts-yellow),
+    inset 0 0 0 2px rgba(240, 228, 66, 0.4),
+    0 0.25rem 0.5rem rgba(230, 159, 0, 0.22);
+}
+
+/* Skip layout and paint for cards that are scrolled out of view. `auto` in
+   contain-intrinsic-size makes the browser remember each card's real height
+   once it has been rendered. */
+.alert-message {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 5rem;
+}
+
+.alert-message .checkbox-alert {
+  width: 1.05rem;
+  height: 1.05rem;
+  border-color: rgba(230, 159, 0, 0.56);
+  background-color: rgba(11, 15, 23, 0.62);
+}
+
+.alert-message .checkbox-alert:focus {
+  border-color: var(--alerts-yellow);
+  box-shadow: 0 0 0 0.2rem rgba(240, 228, 66, 0.25);
+}
+
+/* Yellow fill with a dark tick: Bootstrap's default tick is white, which has
+   too little contrast on yellow. The [type] selector outranks Bootstrap's
+   own :checked[type=checkbox] rule that sets this variable. */
+.alert-message .checkbox-alert:checked[type="checkbox"] {
+  border-color: var(--alerts-yellow);
+  background-color: var(--alerts-yellow);
+  --bs-form-check-bg-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path fill='none' stroke='%23111827' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/></svg>");
+}
+
+.alert-message label.alert-card.flagged {
+  border-color: rgba(156, 163, 175, 0.35);
+  background-color: rgba(156, 163, 175, 0.1);
+}
+
+.alert-message label.alert-card.flagged::before {
+  background: #8b929d;
+}
+
+.alert-empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 18rem;
+  color: var(--alerts-muted);
+  text-align: center;
+}
+
+.alert-empty-state i {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: rgba(86, 180, 233, 0.86);
+  font-size: 2.2rem;
+}
+
+.health-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 250, 242, 0.1);
+  border-radius: 0.95rem;
+  color: var(--alerts-ink);
+  background: radial-gradient(circle at top right, rgba(86, 180, 233, 0.1), transparent 16rem), linear-gradient(180deg, rgba(32, 35, 38, 0.98), rgba(17, 24, 39, 0.98));
+  box-shadow: 0 0.85rem 2rem rgba(0, 0, 0, 0.22);
+}
+
+.health-panel::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 1px;
+  width: 0.32rem;
+  border-top-left-radius: inherit;
+  border-bottom-left-radius: inherit;
+  background: linear-gradient(180deg, var(--alerts-cyan), var(--alerts-blue));
+}
+
+.health-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.health-item {
+  border: 1px solid rgba(255, 250, 242, 0.08);
+  border-radius: 1rem;
+  padding: 0.85rem;
+  background: rgba(11, 15, 23, 0.56);
+}
+
+.status-led {
+  width: 0.95rem;
+  height: 0.95rem;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 8px transparent;
+  cursor: pointer;
+}
+
+.status-led.status-ok {
+  background-color: var(--alerts-blue);
+  box-shadow: 0 0 0 0.28rem rgba(0, 114, 178, 0.14), 0 0 14px rgba(86, 180, 233, 0.7);
+}
+
+.status-led.status-warning {
+  background-color: var(--alerts-yellow);
+  box-shadow: 0 0 0 0.28rem rgba(240, 228, 66, 0.14), 0 0 14px rgba(240, 228, 66, 0.66);
+}
+
+.status-led.status-critical {
+  background-color: var(--alerts-red);
+  box-shadow: 0 0 0 0.28rem rgba(213, 94, 0, 0.12), 0 0 14px rgba(213, 94, 0, 0.7);
+}
+
+.status-led.status-unknown {
+  background-color: #6b7280;
+  box-shadow: 0 0 0 0.28rem rgba(107, 114, 128, 0.12), 0 0 12px rgba(107, 114, 128, 0.62);
+}
+
+.health-status-badge {
+  border: 1px solid rgba(255, 250, 242, 0.08);
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  color: var(--alerts-muted);
+  background: rgba(255, 250, 242, 0.045);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.health-status-badge.status-ok {
+  border-color: rgba(0, 114, 178, 0.34);
+  color: #a8ddff;
+  background: rgba(0, 114, 178, 0.15);
+}
+
+.health-status-badge.status-warning {
+  border-color: rgba(240, 228, 66, 0.5);
+  color: #111827;
+  background: var(--alerts-yellow);
+}
+
+.health-status-badge.status-critical {
+  border-color: rgba(213, 94, 0, 0.46);
+  color: #fffdf5;
+  background: rgba(213, 94, 0, 0.28);
+}
+
+.health-meta {
+  color: var(--alerts-muted);
+  font-size: 0.8rem;
+}
+
+.disk-usage-meter {
+  height: 0.45rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 250, 242, 0.08);
+}
+
+.disk-usage-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--alerts-blue), var(--alerts-cyan));
+  transition: width 240ms ease, background 240ms ease;
+}
+
+.disk-usage-fill.status-unknown {
+  background: linear-gradient(90deg, #6b7280, #9ca3af);
+}
+
+.disk-usage-fill.status-warning {
+  background: repeating-linear-gradient(90deg, var(--alerts-yellow) 0 0.75rem, var(--alerts-amber) 0.75rem 1.5rem);
+}
+
+.disk-usage-fill.status-critical {
+  background: repeating-linear-gradient(90deg, var(--alerts-red) 0 0.75rem, var(--alerts-yellow) 0.75rem 1.5rem);
+}
+
+.alerts-health-tooltip {
+  --bs-tooltip-max-width: 22rem;
+  --bs-tooltip-opacity: 1;
+  --health-accent: var(--alerts-cyan);
+  --health-accent-2: var(--alerts-blue);
+  --health-badge-bg: rgba(0, 114, 178, 0.18);
+  --health-badge-color: #d8e6ff;
+  z-index: 1085;
+}
+
+.alerts-health-tooltip-warning {
+  --health-accent: var(--alerts-yellow);
+  --health-accent-2: var(--alerts-amber);
+  --health-badge-bg: var(--alerts-yellow);
+  --health-badge-color: #111827;
+}
+
+.alerts-health-tooltip-critical {
+  --health-accent: var(--alerts-red);
+  --health-accent-2: var(--alerts-yellow);
+  --health-badge-bg: rgba(213, 94, 0, 0.32);
+  --health-badge-color: #fffdf5;
+}
+
+.alerts-health-tooltip-unknown {
+  --health-accent: #9ca3af;
+  --health-accent-2: #6b7280;
+  --health-badge-bg: rgba(107, 114, 128, 0.26);
+  --health-badge-color: #f3f4f6;
+}
+
+.alerts-health-tooltip .tooltip-inner {
+  max-width: 22rem;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 250, 242, 0.12);
+  border-radius: 0.95rem;
+  color: var(--alerts-ink);
+  background: transparent;
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.34), 0 0 1.5rem color-mix(in srgb, var(--health-accent) 18%, transparent);
+  text-align: left;
+}
+
+.alerts-health-tooltip.bs-tooltip-start .tooltip-arrow::before,
+.alerts-health-tooltip.bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before {
+  border-left-color: rgba(16, 18, 28, 0.98);
+}
+
+.alerts-health-tooltip.bs-tooltip-end .tooltip-arrow::before,
+.alerts-health-tooltip.bs-tooltip-auto[data-popper-placement^="right"] .tooltip-arrow::before {
+  border-right-color: rgba(16, 18, 28, 0.98);
+}
+
+.alerts-health-tooltip.bs-tooltip-top .tooltip-arrow::before,
+.alerts-health-tooltip.bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before {
+  border-top-color: rgba(16, 18, 28, 0.98);
+}
+
+.alerts-health-tooltip.bs-tooltip-bottom .tooltip-arrow::before,
+.alerts-health-tooltip.bs-tooltip-auto[data-popper-placement^="bottom"] .tooltip-arrow::before {
+  border-bottom-color: rgba(16, 18, 28, 0.98);
+}
+
+.health-tooltip-card {
+  position: relative;
+  overflow: hidden;
+  padding: 0.8rem;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--health-accent) 22%, transparent), transparent 9rem),
+    linear-gradient(135deg, rgba(16, 18, 28, 0.98), rgba(11, 15, 23, 0.96));
+}
+
+.health-tooltip-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0.24rem;
+  background: linear-gradient(90deg, var(--health-accent), var(--health-accent-2));
+  box-shadow: 0 0 1rem color-mix(in srgb, var(--health-accent) 42%, transparent);
+}
+
+.health-tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.65rem;
+}
+
+.health-tooltip-icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid color-mix(in srgb, var(--health-accent) 46%, transparent);
+  border-radius: 0.6rem;
+  color: #111827;
+  background: linear-gradient(135deg, var(--health-accent), var(--health-accent-2));
+  box-shadow: 0 0.45rem 0.9rem rgba(0, 0, 0, 0.22);
+}
+
+.alerts-health-tooltip-critical .health-tooltip-icon,
+.alerts-health-tooltip-unknown .health-tooltip-icon {
+  color: #fffdf5;
+}
+
+.health-tooltip-heading {
+  min-width: 0;
+}
+
+.health-tooltip-heading span {
+  display: block;
+  color: var(--alerts-muted);
+  font-family: var(--bs-font-monospace);
+  font-size: 0.61rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.health-tooltip-heading strong {
+  display: block;
+  color: var(--alerts-ink);
+  font-size: 0.95rem;
+  line-height: 1.15;
+}
+
+.health-tooltip-badge {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--health-accent) 42%, transparent);
+  border-radius: 999px;
+  color: var(--health-badge-color);
+  background: var(--health-badge-bg);
+  font-family: var(--bs-font-monospace);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.health-tooltip-pulse {
+  margin-bottom: 0.35rem;
+  color: var(--health-accent);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.health-tooltip-message {
+  margin-bottom: 0.7rem;
+  color: rgba(255, 253, 245, 0.78);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.health-tooltip-grid {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+}
+
+.health-tooltip-row {
+  display: grid;
+  grid-template-columns: minmax(5rem, 0.72fr) minmax(0, 1fr);
+  gap: 0.6rem;
+  align-items: start;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid rgba(255, 250, 242, 0.07);
+  border-radius: 0.52rem;
+  background: rgba(255, 250, 242, 0.04);
+}
+
+.health-tooltip-row span {
+  color: var(--alerts-muted);
+  font-family: var(--bs-font-monospace);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.health-tooltip-row strong {
+  min-width: 0;
+  color: #fffdf5;
+  font-family: var(--bs-font-monospace);
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.health-tooltip-footer {
+  padding-top: 0.55rem;
+  border-top: 1px solid color-mix(in srgb, var(--health-accent) 28%, transparent);
+  color: rgba(255, 253, 245, 0.72);
+  font-size: 0.73rem;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.alert-results::-webkit-scrollbar {
+  width: 0.8rem;
+}
+
+.alert-results::-webkit-scrollbar-track {
+  background: rgba(255, 250, 242, 0.05);
+  border-radius: 999px;
+}
+
+/* Blue by default (the quiet page theme, same thumb as the rule deck), flat
+   amber while the column holds alerts. Flat rather than striped: a striped
+   thumb is repainted on every scroll. Literal values, not var(): var() is not
+   reliably honoured in scrollbar pseudo-elements. */
+.alert-results::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(11, 15, 23, 0.8);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(86, 180, 233, 0.72), rgba(0, 114, 178, 0.72));
+}
+
+.alert-box.has-alerts .alert-results::-webkit-scrollbar-thumb {
+  background: #e69f00;
+}
+
+/* Browsers without ::-webkit-scrollbar (Firefox) get the same colours through
+   the standard properties. This must stay inside @supports: in Chromium,
+   setting scrollbar-color disables the ::-webkit-scrollbar rules above. */
+@supports not selector(::-webkit-scrollbar) {
+  .alert-results {
+    scrollbar-width: thin;
+    scrollbar-color: var(--alerts-cyan) rgba(255, 250, 242, 0.05);
+  }
+
+  .alert-box.has-alerts .alert-results {
+    scrollbar-color: var(--alerts-amber) rgba(255, 250, 242, 0.05);
+  }
+}
+
+.alerts-rules-page-container {
+  background:
+    radial-gradient(circle at 14% 8%, rgba(0, 114, 178, 0.12), transparent 28rem),
+    radial-gradient(circle at 86% 5%, rgba(204, 121, 167, 0.12), transparent 26rem);
+}
+
+.alerts-rules-shell {
+  overflow: visible;
+}
+
+.alerts-rule-panel {
+  height: auto;
+  min-height: 32rem;
+  max-height: calc(100vh - 13.5rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.alerts-rule-panel::before {
+  background: linear-gradient(90deg, var(--alerts-cyan), var(--alerts-violet));
+  box-shadow: 0 0 1rem rgba(86, 180, 233, 0.2);
+}
+
+.alerts-rule-panel::-webkit-scrollbar {
+  width: 0.7rem;
+}
+
+.alerts-rule-panel::-webkit-scrollbar-track {
+  background: rgba(255, 250, 242, 0.05);
+  border-radius: 999px;
+}
+
+.alerts-rule-panel::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(11, 15, 23, 0.8);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(86, 180, 233, 0.72), rgba(0, 114, 178, 0.72));
+}
+
+.alerts-rules-table-wrap {
+  border: 1px solid rgba(255, 250, 242, 0.08);
+  border-radius: 0.85rem;
+  background: rgba(11, 15, 23, 0.36);
+  overflow-x: auto;
+}
+
+/* This wrapper also carries .alert-results (for its layout) and sits outside
+   any .alert-box, so it gets the default blue scrollbar from those rules. */
+
+.alerts-rules-table {
+  min-width: 56rem;
+  width: 100%;
+  color: var(--alerts-ink);
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.alerts-rules-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 0.85rem;
+  border-bottom: 1px solid rgba(86, 180, 233, 0.2);
+  color: #d8e6ff;
+  background: rgba(16, 18, 28, 0.96);
+  font-family: var(--bs-font-monospace);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.alerts-rules-table tbody td {
+  padding: 0.9rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 250, 242, 0.07);
+  vertical-align: middle;
+}
+
+.alerts-rules-table tbody tr {
+  background:
+    radial-gradient(circle at right, rgba(86, 180, 233, 0.055), transparent 16rem),
+    rgba(255, 250, 242, 0.018);
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.alerts-rules-table tbody tr:hover {
+  background:
+    radial-gradient(circle at right, rgba(86, 180, 233, 0.12), transparent 16rem),
+    rgba(0, 114, 178, 0.08);
+}
+
+.alerts-rule-code,
+.alerts-rule-window code,
+.alerts-rule-example code,
+.alerts-rules-brief code {
+  color: #d8e6ff;
+  overflow-wrap: anywhere;
+}
+
+.alerts-rule-window {
+  max-width: 22rem;
+  color: var(--alerts-muted);
+  font-size: 0.78rem;
+}
+
+.alerts-rule-toast {
+  border: 1px solid rgba(86, 180, 233, 0.32);
+  border-radius: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  color: #d8e6ff;
+  background:
+    radial-gradient(circle at top right, rgba(86, 180, 233, 0.16), transparent 12rem),
+    rgba(0, 114, 178, 0.14);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.16);
+}
+
+.btn-alert-danger {
+  border-color: rgba(213, 94, 0, 0.5);
+  color: #ffe2ad;
+  background: rgba(213, 94, 0, 0.14);
+}
+
+.btn-alert-danger:hover,
+.btn-alert-danger:focus-visible {
+  border-color: rgba(213, 94, 0, 0.72);
+  color: #fffdf5;
+  background: rgba(213, 94, 0, 0.24);
+}
+
+.alerts-rule-form .form-label {
+  color: #d8e6ff;
+  font-family: var(--bs-font-monospace);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.alerts-rule-form .form-control,
+.alerts-rule-form .form-select {
+  border-color: rgba(86, 180, 233, 0.24);
+  color: var(--alerts-ink);
+  background-color: rgba(11, 15, 23, 0.58);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.alerts-rule-form .form-control:focus,
+.alerts-rule-form .form-select:focus {
+  border-color: rgba(86, 180, 233, 0.72);
+  color: var(--alerts-ink);
+  background-color: rgba(11, 15, 23, 0.72);
+  box-shadow: 0 0 0 0.18rem rgba(86, 180, 233, 0.16);
+}
+
+.alerts-rule-form textarea.form-control {
+  min-height: 8rem;
+}
+
+.alerts-enable-card {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.55rem;
+  border: 1px solid rgba(86, 180, 233, 0.22);
+  border-radius: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  color: var(--alerts-ink);
+  background: rgba(11, 15, 23, 0.46);
+}
+
+.alerts-enable-card.form-check {
+  padding-left: 0.85rem;
+}
+
+.alerts-enable-card .form-check-input {
+  flex: 0 0 auto;
+  float: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  border-color: rgba(86, 180, 233, 0.5);
+  background-color: rgba(11, 15, 23, 0.76);
+}
+
+.alerts-enable-card .form-check-label {
+  margin: 0;
+}
+
+.alerts-enable-card .form-check-input:checked {
+  border-color: var(--alerts-cyan);
+  background-color: var(--alerts-blue);
+}
+
+.alerts-field-error,
+.alerts-rule-error {
+  color: #ffd18a;
+  font-size: 0.8rem;
+}
+
+.alerts-field-error ul,
+.alerts-rule-error ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1rem;
+}
+
+.alerts-rule-error {
+  border: 1px solid rgba(213, 94, 0, 0.46);
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  background: rgba(213, 94, 0, 0.16);
+}
+
+.alerts-rule-example {
+  border: 1px solid rgba(86, 180, 233, 0.18);
+  border-radius: 0.85rem;
+  padding: 0.85rem;
+  color: #d8e6ff;
+  background:
+    linear-gradient(rgba(255, 250, 242, 0.026) 1px, transparent 1px),
+    rgba(11, 15, 23, 0.58);
+  background-size: 100% 1.55rem;
+  font-size: 0.82rem;
+}
+
+.alerts-rules-brief .health-item strong {
+  color: var(--alerts-ink);
+}
+
+@media (min-width: 1200px) {
+  /* From xl the monitor sits in its own column and the dashboard is bounded to
+     the viewport (the shell is a viewport-height box); the alert columns have
+     a height floor so the shell/page scroll instead of clipping them in a
+     short window. Scoped to the dashboard: the rules pages share
+     .alerts-shell and .health-panel. */
+  .parseus-main:has(> .alerts-page-container:not(.alerts-rules-page-container)) {
+    flex: 1 0 auto;
+    height: auto;
+  }
+
+  .alerts-page-container:not(.alerts-rules-page-container) {
+    flex: 1 0 auto;
+  }
+
+  .alerts-page-container:not(.alerts-rules-page-container) .alerts-shell {
+    flex: 1 0 auto;
+    max-height: none;
+  }
+
+  .alerts-page-container:not(.alerts-rules-page-container) .alerts-shell > .row.flex-grow-1 {
+    flex: 1 0 auto;
+  }
+
+  .alerts-page-container:not(.alerts-rules-page-container) .alert-box {
+    min-height: 30rem;
+  }
+
+  /* The monitor panel is content-height (ends at its last item) and scrolls
+     inside itself past the column height, rather than deciding how tall the
+     row is: it is absolutely positioned (out of flow) in a wrapper that spans
+     the column so its percentage max-height resolves, while the alert columns
+     set the row height. The wrapper itself stays invisible and ignores the
+     pointer. */
+  .alerts-page-container:not(.alerts-rules-page-container) .alerts-shell > .row.flex-grow-1 > .col-xl-3 {
+    position: relative;
+  }
+
+  .alerts-page-container:not(.alerts-rules-page-container) #monitorHealthCollapse {
+    position: absolute;
+    top: 0;
+    right: calc(var(--bs-gutter-x) * 0.5);
+    bottom: 0;
+    left: calc(var(--bs-gutter-x) * 0.5);
+    pointer-events: none;
+  }
+
+  .alerts-page-container:not(.alerts-rules-page-container) .health-panel {
+    max-height: 100%;
+    overflow-y: auto;
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 1199.98px) {
+  /* Below xl the dashboard becomes an ordinary scrolling page instead of a
+     viewport-bound grid: every ancestor of the columns sizes to its content
+     (not shrunk to fit the pinned viewport height), so each alert list gets
+     real space, the shell background runs to the bottom of the page, and the
+     footer sits below the last column. */
+  .parseus-main:has(> .alerts-page-container:not(.alerts-rules-page-container)) {
+    flex: 0 0 auto;
+    height: auto;
+    overflow: visible;
+  }
+
+  .alerts-page-container:not(.alerts-rules-page-container),
+  .alerts-page-container:not(.alerts-rules-page-container) .alerts-shell {
+    flex: 0 0 auto;
+    max-height: none;
+  }
+
+  .alerts-page-container,
+  .alerts-shell,
+  .alerts-shell > .row.flex-grow-1,
+  .alerts-shell > .row.flex-grow-1 > [class*="col-"],
+  .alerts-shell > .row.flex-grow-1 .row.flex-grow-1,
+  .alerts-shell > .row.flex-grow-1 .row.flex-grow-1 > [class*="col-"] {
+    overflow: visible;
+  }
+
+  .alert-box {
+    /* min-height, not height: the box is flex: 1 1 0 in an auto-height
+       column, so height is ignored. */
+    min-height: max(32rem, 75vh);
+  }
+
+  .alerts-shell .btn:not(.btn-close) {
+    padding-inline: 0.62rem;
+    font-size: 0.84rem;
+  }
+
+  .alert-section-topline {
+    align-items: flex-start !important;
+  }
+
+  .alert-section-toolbar {
+    align-items: stretch !important;
+  }
+
+  .alert-section-toolbar.alerts-action-bar {
+    padding: 0.28rem;
+  }
+
+  .alert-section-controls .btn:not(.btn-close) {
+    padding: 0.24rem 0.46rem;
+    font-size: 0.74rem;
+  }
+}
+
+@media (max-width: 767.98px) {
+  /* Single stacked column: shorter boxes than the side-by-side range above. */
+  .alert-box {
+    height: 42vh;
+    min-height: 24rem;
+  }
+
+  /* Hero actions: when the "N selected" count has its own row (it is full
+     width here), the buttons share the next row and stretch to fill it. */
+  .alerts-hero .alerts-action-bar .btn {
+    flex: 1 1 auto;
+  }
+
+  /* Column header: the count gets its own row, then the two buttons get
+     theirs. */
+  .alert-section-toolbar.alerts-action-bar {
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 0.32rem;
+  }
+
+  .alert-section-summary {
+    flex: 1 1 100%;
+  }
+
+  .alert-section-controls {
+    display: grid !important;
+    flex: 1 1 100%;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .alert-section-controls .btn:not(.btn-close) {
+    justify-content: center;
+  }
+
+  .watch-mode-card .d-flex {
+    align-items: flex-start !important;
+  }
+
+  .watch-mode-message {
+    white-space: normal;
+  }
+
+  .watch-mode-count span {
+    font-size: 1.45rem;
+  }
+
+  .health-panel {
+    max-height: 42vh;
+    overflow-y: auto;
+  }
+
+  .alerts-selected-count {
+    width: 100%;
+  }
+
+  .alerts-rule-panel {
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+  }
+}

@@ -1,0 +1,43 @@
+<div id="registers-container" class="flex-grow-1 overflow-hidden p-3" style="aspect-ratio: 4 / 3">
+  <!-- CHART -->
+  <div class="row align-items-stretch overflow-hidden h-100">
+    <div class="col-12 h-100 px-2">
+      <div class="d-flex flex-column bg-body-secondary rounded border h-100">
+
+        <div class="d-flex gap-2 p-2">
+          <span class="fw-bold pe-2 border-3 border-end border-secondary">Chart Options</span>
+          <div class="form-check form-switch pe-2 border-3 border-end border-secondary">
+            <input id="show-line" class="chart-option form-check-input" type="checkbox" role="switch" checked>
+            <label class="form-check-label" for="show-line">Line</label>
+          </div>
+          <div class="form-check form-switch pe-2 border-3 border-end border-secondary">
+            <input id="normalize" class="chart-option form-check-input" type="checkbox" role="switch">
+            <label class="form-check-label" for="normalize">Normalize</label>
+          </div>
+          <div>
+            <small><i>**Limit 10 registers</i></small>
+          </div>
+        </div>
+
+        <div id="register-graph-legend" class="d-flex flex-row gap-3 px-2 overflow-auto">
+          <div class="legend-item d-none">
+            <div class="legend-color"></div>
+            <span class="legend-text"></span>
+          </div>
+        </div>
+
+        <div id="register-graph" class="chart-container flex-grow-1 w-100 overflow-hidden">
+          <div class="d-flex justify-content-center align-items-center h-100 text-muted">
+            Please select elastic data to load ...
+          </div>
+        </div>
+
+        <div class="d-flex flex-row gap-3 px-2 pb-2 justify-content-end">
+          <button id="reset-zoom-register-graph" class="btn btn-outline-secondary disabled">
+            <i class="bi-zoom-in me-2"></i>Reset Zoom</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

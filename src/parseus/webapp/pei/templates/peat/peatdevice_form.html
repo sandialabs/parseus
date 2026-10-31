@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if object %}Update {{ object.label }}{% else %}PEAT Host Details{% endif %} | {{ block.super }}{% endblock %}
+
+{% block custom_styles %}
+<link rel="stylesheet" href="{% static 'css/peat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="peat-workspace peat-config-workspace">
+  <div class="container px-4 pt-4 peat-breadcrumb">
+    <nav style="--bs-breadcrumb-divider: '>'" aria-label="breadcrumb">
+      <ol class="breadcrumb p-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+          <a class="link-body-emphasis" href="{% url 'peat:home' %}">
+            <i class="bi-house-door-fill"></i>
+          </a>
+        </li>
+        <li class="breadcrumb-item">
+          <a class="link-body-emphasis fw-semibold text-decoration-none" href="{% url 'peat:peatconfig-list' %}">
+            PEAT Configurations
+          </a>
+        </li>
+        {% if object %}
+        <li class="breadcrumb-item">
+          <a class="link-body-emphasis fw-semibold text-decoration-none" href="{% url 'peat:peatconfig-details' object.config.pk %}">
+            {{ object.config.name }}
+          </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Update Host</li>
+        {% else %}
+        <li class="breadcrumb-item active" aria-current="page">Host Details</li>
+        {% endif %}
+      </ol>
+    </nav>
+  </div>
+
+  <div class="container px-4 py-3">
+    <div class="peat-page-header peat-workspace-hero p-4 p-lg-5">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+          <div class="peat-kicker mb-3"><i class="bi-router"></i> Host tuning</div>
+          {% if object %}
+          <h1 class="display-6 fw-bold peat-title mb-3">Update {{ object.label }}</h1>
+          <p class="lead mb-0">Tune this PEAT host's identity, connection details, module, and JSON options before the next scan or pull.</p>
+          <div class="peat-workspace-chips mt-3" aria-label="Host summary">
+            <span><i class="bi-layout-text-sidebar-reverse"></i> {{ object.config.name }}</span>
+            <span><i class="bi-hdd-network"></i> {{ object.ip|default:"No IP set" }}</span>
+            <span><i class="bi-boxes"></i> {{ object.peat_module|default:"No module" }}</span>
+          </div>
+          {% else %}
+          <h1 class="display-6 fw-bold peat-title mb-3">PEAT host details</h1>
+          <p class="lead mb-0">Define the host metadata and PEAT module details that drive repeatable device workflows.</p>
+          {% endif %}
+        </div>
+        <div class="col-lg-4">
+          <div class="peat-workspace-stat-grid mx-auto ms-lg-auto">
+            <div class="peat-workspace-stat">
+              <i class="bi-person-badge"></i>
+              <strong>Identity</strong>
+              <span>Label and describe the target.</span>
+            </div>
+            <div class="peat-workspace-stat">
+              <i class="bi-braces"></i>
+              <strong>Options</strong>
+              <span>Keep module JSON valid.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container px-4 pb-5">
+    <div class="peat-panel p-4 p-lg-5">
+      <form method="post" enctype="multipart/form-data" class="peat-form" onsubmit="return validateJSON()">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger" role="alert">
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <div class="peat-form-section mb-4">
+          <div class="d-flex gap-3 align-items-start mb-4">
+            <span class="peat-mini-orb"><i class="bi-person-badge"></i></span>
+            <div>
+              <h2 class="h4 peat-title mb-1">Host identity</h2>
+              <p class="text-body-secondary mb-0">Name the device clearly so it is easy to recognize in PEAT runs and history.</p>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-lg-6">
+              <label for="{{ form.label.id_for_label }}" class="form-label fw-bold">{{ form.label.label }}</label>
+              {{ form.label }}
+              {% if form.label.errors %}<div class="invalid-feedback d-block">{{ form.label.errors }}</div>{% endif %}
+            </div>
+            <div class="col-lg-6">
+              <label for="{{ form.name.id_for_label }}" class="form-label fw-bold">{{ form.name.label }}</label>
+              {{ form.name }}
+              {% if form.name.errors %}<div class="invalid-feedback d-block">{{ form.name.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12">
+              <label for="{{ form.comment.id_for_label }}" class="form-label fw-bold">{{ form.comment.label }}</label>
+              {{ form.comment }}
+              {% if form.comment.errors %}<div class="invalid-feedback d-block">{{ form.comment.errors }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="peat-form-section mb-4">
+          <div class="d-flex gap-3 align-items-start mb-4">
+            <span class="peat-mini-orb"><i class="bi-hdd-network"></i></span>
+            <div>
+              <h2 class="h4 peat-title mb-1">Connection identifiers</h2>
+              <p class="text-body-secondary mb-0">Provide one or more identifiers PEAT can use to locate and connect with this host.</p>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-lg-6">
+              <label for="{{ form.ip.id_for_label }}" class="form-label fw-bold">{{ form.ip.label }}</label>
+              {{ form.ip }}
+              {% if form.ip.errors %}<div class="invalid-feedback d-block">{{ form.ip.errors }}</div>{% endif %}
+            </div>
+            <div class="col-lg-6">
+              <label for="{{ form.hostname.id_for_label }}" class="form-label fw-bold">{{ form.hostname.label }}</label>
+              {{ form.hostname }}
+              {% if form.hostname.errors %}<div class="invalid-feedback d-block">{{ form.hostname.errors }}</div>{% endif %}
+            </div>
+            <div class="col-lg-6">
+              <label for="{{ form.mac.id_for_label }}" class="form-label fw-bold">{{ form.mac.label }}</label>
+              {{ form.mac }}
+              {% if form.mac.errors %}<div class="invalid-feedback d-block">{{ form.mac.errors }}</div>{% endif %}
+            </div>
+            <div class="col-lg-6">
+              <label for="{{ form.serial_port.id_for_label }}" class="form-label fw-bold">{{ form.serial_port.label }}</label>
+              {{ form.serial_port }}
+              {% if form.serial_port.errors %}<div class="invalid-feedback d-block">{{ form.serial_port.errors }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="peat-form-section">
+          <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-start mb-4">
+            <div class="d-flex gap-3 align-items-start">
+              <span class="peat-mini-orb"><i class="bi-boxes"></i></span>
+              <div>
+                <h2 class="h4 peat-title mb-1">Module behavior</h2>
+                <p class="text-body-secondary mb-0">Select the PEAT module and keep its custom options in clean JSON format.</p>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary" id="format-json-button">
+              <i class="bi-braces me-2"></i>Format JSON
+            </button>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-lg-5">
+              <label for="{{ form.peat_module.id_for_label }}" class="form-label fw-bold">{{ form.peat_module.label }}</label>
+              {{ form.peat_module }}
+              {% if form.peat_module.errors %}<div class="invalid-feedback d-block">{{ form.peat_module.errors }}</div>{% endif %}
+              <div class="text-body-secondary small mt-2">The selected module controls how PEAT interrogates or pulls from this host.</div>
+            </div>
+            <div class="col-lg-7">
+              <label for="{{ form.options.id_for_label }}" class="form-label fw-bold">{{ form.options.label }}</label>
+              {{ form.options }}
+              {% if form.options.errors %}<div class="invalid-feedback d-block">{{ form.options.errors }}</div>{% endif %}
+              <div class="text-body-secondary small mt-2">Use valid JSON. Choose “Format JSON” to pretty-print the options before saving.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="peat-action-strip p-3 mt-4">
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi-check2 me-2"></i>Update Host
+            </button>
+            {% if object %}
+            <a href="{% url 'peat:peatconfig-details' object.config.pk %}" class="btn btn-secondary" role="button">
+              <i class="bi-x-lg me-2"></i>Cancel
+            </a>
+            {% else %}
+            <a href="{% url 'peat:peatconfig-list' %}" class="btn btn-secondary" role="button">
+              <i class="bi-x-lg me-2"></i>Cancel
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block custom_scripts %}
+<script>
+  function getOptionsTextarea() {
+    return document.getElementById("id_options");
+  }
+
+  function formatJSON(showErrorToast) {
+    const textarea = getOptionsTextarea();
+    if (!textarea) {
+      return true;
+    }
+
+    const rawValue = textarea.value.trim();
+    if (!rawValue) {
+      textarea.value = "{}";
+      return true;
+    }
+
+    try {
+      const json = JSON.parse(rawValue);
+      textarea.value = JSON.stringify(json, null, 4);
+      return true;
+    } catch (e) {
+      if (showErrorToast) {
+        toastError("Invalid JSON format in 'Options'.", 5000);
+      }
+      return false;
+    }
+  }
+
+  function validateJSON() {
+    return formatJSON(true);
+  }
+
+  function updatePeatModuleChoice() {
+    const selectElement = document.getElementById("id_peat_module");
+    if (!selectElement) {
+      return;
+    }
+    selectElement.value = "{{ object.peat_module|lower }}";
+  }
+
+  function getModuleDefaultsUrl(moduleName) {
+    const urlTemplate = "{% url 'peat:peat-module-defaults' '__MODULE__' %}";
+    return urlTemplate.replace("__MODULE__", encodeURIComponent(moduleName));
+  }
+
+  async function loadModuleDefaults(moduleName) {
+    const response = await fetch(getModuleDefaultsUrl(moduleName), {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Unable to load PEAT module defaults.");
+    }
+
+    return response.json();
+  }
+
+  async function updateOptionsForSelectedModule(moduleName) {
+    const textarea = getOptionsTextarea();
+    if (!textarea || !moduleName) {
+      return;
+    }
+
+    const defaults = await loadModuleDefaults(moduleName);
+    textarea.value = JSON.stringify(defaults || {}, null, 4);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    updatePeatModuleChoice();
+    formatJSON(false);
+
+    const moduleSelect = document.getElementById("id_peat_module");
+    let previousModuleValue = moduleSelect ? moduleSelect.value : "";
+    if (moduleSelect) {
+      moduleSelect.addEventListener("change", async function () {
+        const selectedModule = moduleSelect.value;
+
+        try {
+          await updateOptionsForSelectedModule(selectedModule);
+          previousModuleValue = selectedModule;
+          toastSuccess("Module defaults loaded into Options.", 3000);
+        } catch (error) {
+          moduleSelect.value = previousModuleValue;
+          toastError(error.message || "Unable to load module defaults.", 5000);
+        }
+      });
+    }
+
+    const formatButton = document.getElementById("format-json-button");
+    if (formatButton) {
+      formatButton.addEventListener("click", function () {
+        if (formatJSON(true)) {
+          toastSuccess("Options JSON formatted.", 3000);
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

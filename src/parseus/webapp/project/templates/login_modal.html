@@ -1,0 +1,62 @@
+{% load static %}
+<div class="modal fade parseus-login-modal" id="login-modal" tabindex="-1" aria-labelledby="login-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <button type="button" class="btn-close parseus-login-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+            <div class="modal-body p-0">
+                <div class="parseus-login-card">
+                    <div class="parseus-login-hero">
+                        <div class="parseus-login-orbit" aria-hidden="true">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <div class="parseus-login-logo">
+                            <img src="{% static 'img/parseus-icon.png' %}" class="img-fluid" alt="parseus icon" width="92" height="92" loading="lazy">
+                        </div>
+                        <div class="parseus-login-kicker">Secure OT workspace</div>
+                        <h2 class="parseus-login-title" id="login-modal-title">Welcome back to Parseus</h2>
+                        <p class="parseus-login-text">Pick up where you left off: compare registers, investigate analytics, and keep your network insights close.</p>
+                        <div class="parseus-login-badges" aria-label="Parseus capabilities">
+                            <span><i class="bi bi-shield-lock" aria-hidden="true"></i> Protected</span>
+                            <span><i class="bi bi-activity" aria-hidden="true"></i> Live insight</span>
+                        </div>
+                    </div>
+
+                    <form id="sign-in-form" class="parseus-login-form" method="post">
+                        {% csrf_token %}
+                        <div class="parseus-login-form-header">
+                            <span class="parseus-login-form-icon bi bi-fingerprint" aria-hidden="true"></span>
+                            <div>
+                                <div class="parseus-login-form-title">Authenticate</div>
+                                <div class="parseus-login-form-subtitle">Use your Parseus credentials to continue.</div>
+                            </div>
+                        </div>
+
+                        <div class="form-floating parseus-login-field mb-3">
+                            <input type="text" name="username" id="id_username" class="form-control" placeholder="Username" autocomplete="username" required>
+                            <label class="form-label" for="id_username">Username</label>
+                        </div>
+
+                        <div class="form-floating parseus-login-field mb-3">
+                            <input type="password" name="password" id="id_password" class="form-control" placeholder="Password" autocomplete="current-password" required>
+                            <label class="form-label" for="id_password">Password</label>
+                        </div>
+
+                        <input type="hidden" name="next" value="{{ request.GET.next|default:request.path }}">
+
+                        <div class="d-grid mt-4">
+                            <button id="login-button" type="submit" class="btn parseus-login-submit">
+                                <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span>
+                                <span>Sign in to workspace</span>
+                            </button>
+                        </div>
+
+                        <div class="parseus-login-message" id="loginMessage" role="status" aria-live="polite"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

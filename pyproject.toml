@@ -1,0 +1,174 @@
+[build-system]
+requires = [
+    "setuptools>=62.0.0",
+    "cython>=0.29.33",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "parseus"
+version = "1.0.0"
+description = "Graphical User Interface for Operational Technology Security Analysis."
+authors = [
+    {name = "James Gallagher"},
+    {name = "Adrian Belmontes"},
+    {name = "Ethan Brown"},
+    {name = "John Mulder"},
+    {name = "Jason Hall"},
+    {name = "Jessica Robinson"},
+    {name = "Mark Elder"},
+    {name = "Danica Hahn"},
+    {name = "Jordan Johnson"},
+    {name = "Lauren Torkelson"},
+]
+# Applies to the Parseus application source only. The deployment tooling
+# (manage_parseus.py / manage_parseus_lib) is stdlib-only and separately
+# supports Python 3.8+ on the host; see docs/MANAGEMENT.md.
+requires-python = ">=3.11,<3.14"
+license-files = [
+    "LICENSE",
+    "COPYRIGHT",
+]
+dependencies = [
+    # ---- Analysis engine (framework-agnostic parseus core) ----
+    # Datastore + numerical stack
+    "elasticsearch<9",
+    "numpy",
+    "opensearch-py",
+    "pandas>=2.2",
+    # Preprocessors / analytic classes (register clustering, diffs)
+    "hdbscan",
+    "scikit-learn",
+    "joblib",
+    "more_itertools",
+    "deepdiff",
+
+    # ---- Shared webapp (core Django UI needed by every install) ----
+    "Django>=5.2,<6",
+    "django_compressor",
+    "django-libsass",
+    "pyyaml",
+
+    # ---- Async / scheduled task execution ----
+    "celery",
+    "django-celery-beat",
+    "redis",
+
+    # ---- Websocket support (available in base) ----
+    "channels",
+    "daphne",
+]
+readme = "README.md"
+
+[tool.setuptools.package-data]
+parseus = [
+    # Webapp files
+    "**/*.html",
+    "**/*.js",
+    "**/*.png",
+    "**/*.jpg", 
+    "**/*.svg",
+]
+
+[project.scripts]
+parseus = "parseus.webapp.manage:main"
+
+# Pluggable Parseus feature apps are advertised via this entry-point group.
+# Each entry points to a callable returning an AppDescriptor. Parseus discovers
+# installed apps by enumerating this group (see parseus.webapp.registry).
+[project.entry-points."parseus.apps"]
+pei = "parseus.webapp.pei.descriptor:get_app_descriptor"
+registers = "parseus.webapp.registers.descriptor:get_app_descriptor"
+analytics = "parseus.webapp.analytics.descriptor:get_app_descriptor"
+alerts = "parseus.webapp.alerts.descriptor:get_app_descriptor"
+
+# Analytics are auto-discovered via this entry-point group. Each entry loads a
+# module whose import runs @register_analytic decorators (see
+# parseus.analytics.registry.discover_analytics). The built-in analytics package
+# registers this way; external packages can add their own analytics by declaring
+# an entry point in the same group.
+[project.entry-points."parseus.analytics"]
+builtin = "parseus.analytics.builtin_analytics"
+
+[tool.setuptools.packages.find]
+where = ["src/"]
+
+[project.optional-dependencies]
+# Per-app UI dependencies. These are the dependencies used *only* by a single
+# Django feature app's UI layer (not by the framework-agnostic engine), so they
+# are opt-in: `pip install parseus[pei]` adds the PEAT/websocket stack, etc. The
+# apps still auto-discover via the parseus.apps entry points; the extra only
+# controls whether that app's heavy dependencies are present.
+pei = [
+    # PEAT scan/pull orchestration (pei views/forms/locks)
+    "peat @ git+https://github.com/sandialabs/PEAT.git@v2026.9.2",
+    # PEAT hard-pins requests==2.29.0 and cryptography==38.0.4. Without caps,
+    # pip's resolver backtracks through opensearch-py's and autobahn's full
+    # version history looking for a combination that satisfies those pins
+    # (resolution-too-deep). These caps are scoped to this extra only, so
+    # installs without [pei] still get modern opensearch-py/autobahn/
+    # cryptography/pyOpenSSL. Revisit once PEAT relaxes its pins.
+    "opensearch-py<3",
+    "autobahn<26",
+]
+analytics = [
+    # No UI-only extras: trained-model artifacts use the core joblib stack.
+]
+
+# Convenience: install every feature app's extras at once.
+all = [
+    "parseus[pei]",
+    "parseus[analytics]",
+]
+
+dev = [
+    # Linting / static analysis
+    "ruff",
+    "pylint",
+    "vulture",
+    # Formatting / imports
+    "black",
+    "isort",
+    # pyproject validation
+    "validate-pyproject[all]",
+    "tomli",
+    # Testing
+    "pytest",
+    "pytest-cov",
+    "pytest-django",
+    "Mako",
+    # PCAP replay helper for the deploy/integrations/gpib scripts
+    "scapy",
+]
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+
+# https://beta.ruff.rs/docs
+[tool.ruff]
+line-length = 99
+output-format = "full"
+
+[tool.pytest.ini_options]
+# Test-only Django settings (tests/settings.py, outside src/ so it never ships).
+# It supplies test secrets + an in-memory DB, so `pytest` runs with no env vars
+# and pytest-django can create the test database for @pytest.mark.django_db.
+DJANGO_SETTINGS_MODULE = "tests.settings"
+# Put the repo root (for the `tests` package) and src/ (for `parseus`) on
+# sys.path early, so a bare `pytest` works without a PYTHONPATH prefix.
+pythonpath = [".", "src"]
+# App-specific tests live next to their app (e.g. webapp/alerts/tests.py), the
+# Django convention; cross-cutting tests live in tests/. Both are collected.
+# `tests.py` must be listed explicitly: pytest's default patterns only match
+# test_*.py / *_test.py, so those files were silently never run by `pytest` or CI.
+testpaths = ["tests", "src/parseus"]
+python_files = ["test_*.py", "*_test.py", "tests.py"]
+# Vendored/generated trees that can contain stray Python files.
+norecursedirs = ["node_modules", "dist", ".git", ".venv", "htmlcov", "build"]
+# Delete each run's tmp dir on success (keep it only when a test fails, for
+# debugging). Avoids leftover /tmp/pytest-of-* dirs that trip the next run's
+# cleanup with "Directory not empty" warnings.
+tmp_path_retention_policy = "failed"

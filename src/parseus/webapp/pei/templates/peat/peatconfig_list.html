@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}PEAT Configurations | {{ block.super }}{% endblock %}
+
+{% block custom_styles %}
+<link rel="stylesheet" href="{% static 'css/peat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="peat-workspace peat-config-workspace">
+  <div class="container px-4 pt-4 peat-breadcrumb">
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+      <ol class="breadcrumb p-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+          <a class="link-body-emphasis" href="{% url 'peat:home' %}">
+            <i class="bi-house-door-fill"></i>
+          </a>
+        </li>
+        <li class="breadcrumb-item active">
+          PEAT Configurations
+        </li>
+      </ol>
+    </nav>
+  </div>
+
+  <div class="container px-4 py-3 pb-5">
+    <div class="peat-panel p-4 p-lg-5">
+      <form>
+        {% csrf_token %}
+        <div class="d-flex flex-column flex-xl-row justify-content-between gap-3 align-items-xl-center mb-4">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <div class="peat-kicker"><i class="bi-layout-text-sidebar-reverse"></i> Configuration library</div>
+              <button type="button" class="btn btn-sm btn-outline-info rounded-circle" data-bs-toggle="modal" data-bs-target="#configInfoModal" aria-label="About the PEAT configuration workflow">
+                <i class="bi-info-circle"></i>
+              </button>
+            </div>
+            <h1 class="h3 peat-title mb-1">Manage PEAT configurations</h1>
+            <p class="text-body-secondary mb-0">Select a configuration to review devices, pull history, and available runs.</p>
+          </div>
+          <div class="d-grid gap-2 d-md-flex">
+            <div class="dropdown">
+              <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi-filetype-yml me-2"></i>New Config
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'peat:peatconfig-builder' %}"><i class="bi-file-earmark-plus me-2"></i>Create Config</a></li>
+                <li><a class="dropdown-item" href="{% url 'peat:peatconfig-form' %}"><i class="bi-file-earmark-arrow-up me-2"></i>Upload Config</a></li>
+              </ul>
+            </div>
+            <button type="button" class="btn btn-danger" id="delete-button" onclick="peat.peatConfigDelete('/peat/config/')" disabled>
+              <i class="bi-trash me-2"></i>Remove
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-striped align-middle peat-table">
+            <thead>
+              <tr>
+                <th>Select</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Author</th>
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for config in object_list %}
+              <tr>
+                <td><input type="checkbox" name="config_ids" value="{{ config.id }}" aria-label="Select {{ config.name }}"></td>
+                <td><a class="link-body-emphasis fw-semibold" href="{% url 'peat:peatconfig-details' config.pk %}">{{ config.name }}</a></td>
+                <td>{{ config.description }}</td>
+                <td>{{ config.author }}</td>
+                <td><time data-timestamp="{{ config.created|date:'c' }}" data-timestamp-style="compact">{{ config.created }}</time></td>
+                <td><time data-timestamp="{{ config.updated|date:'c' }}" data-timestamp-style="compact">{{ config.updated }}</time></td>
+                <td>
+                  <a href="{% url 'peat:peatconfig-details' config.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi-eye me-1"></i>View Details
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="peat-empty-state">
+                  <i class="bi-file-earmark-plus"></i>
+                  <strong>No PEAT configurations yet.</strong><br>
+                  Create or upload a configuration to start scanning and pulling artifacts.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+  <div class="modal fade" id="configInfoModal" tabindex="-1" aria-labelledby="configInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content peat-modal-content">
+        <div class="modal-header peat-modal-header">
+          <div>
+            <div class="peat-kicker mb-2"><i class="bi-filetype-yml"></i> Configuration workflow</div>
+            <h2 class="modal-title h4" id="configInfoModalLabel">Build, upload, and run from configurations</h2>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+              <p class="lead mb-4">
+                PEAT configuration files keep hosts, credentials, modules, scan behavior, and pull settings together so you
+                can run repeatable device workflows without rebuilding them each time.
+              </p>
+              <div class="peat-workspace-chips" aria-label="Configuration workflow capabilities">
+                <span><i class="bi-file-earmark-plus"></i> Create YAML</span>
+                <span><i class="bi-file-earmark-arrow-up"></i> Upload configs</span>
+                <span><i class="bi-play-circle"></i> Launch scans and pulls</span>
+              </div>
+            </div>
+            <div class="col-lg-5">
+              <div class="peat-workspace-stat-grid mx-auto ms-lg-auto">
+                <div class="peat-workspace-stat">
+                  <i class="bi-hdd-network"></i>
+                  <strong>Targets</strong>
+                  <span>Save hosts and device labels.</span>
+                </div>
+                <div class="peat-workspace-stat">
+                  <i class="bi-shield-lock"></i>
+                  <strong>Access</strong>
+                  <span>Keep run options in one place.</span>
+                </div>
+                <div class="peat-workspace-stat">
+                  <i class="bi-box-arrow-down"></i>
+                  <strong>Artifacts</strong>
+                  <span>Pull data from known devices.</span>
+                </div>
+                <div class="peat-workspace-stat">
+                  <i class="bi-arrow-repeat"></i>
+                  <strong>Repeatable</strong>
+                  <span>Reuse proven workflows.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_scripts %}
+<script type="text/javascript" src="{% static 'js/peat.js' %}"></script>
+<script>
+  function toggleDeleteButton() {
+    const checkboxes = document.querySelectorAll('input[name="config_ids"]');
+    const deleteButton = document.getElementById('delete-button');
+    // Check if any checkbox is checked
+    const anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+    // Enable or disable the button based on checkbox state
+    deleteButton.disabled = !anyChecked;
+  }
+
+  // Add event listeners to checkboxes on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    const checkboxes = document.querySelectorAll('input[name="config_ids"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', toggleDeleteButton);
+    });
+    // Initial check to set the button state
+    toggleDeleteButton();
+  });
+
+</script>
+{% endblock %}

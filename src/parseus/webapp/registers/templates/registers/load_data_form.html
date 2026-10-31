@@ -1,0 +1,68 @@
+<div id="load-data-container" class="container">
+  <div class="row my-4 justify-content-center">
+    <div class="col-12">
+      <div class="border rounded bg-body-secondary">
+
+        <div class="fs-3 border-bottom py-1 px-3">
+          <div class="row">
+
+            <div class="col-md-8 d-flex justify-content-center justify-content-md-start align-items-center">
+              <div class="p-2"><i class="bi-database pe-2"></i>Load Datastore Data</div>
+            </div>
+
+            <div class="col-md-4 d-grid d-md-flex justify-content-center justify-content-md-end rounded-bottom p-2">
+              <button id="load-data-submit" type="submit" form="load-data" class="btn btn-primary">
+                <i class="bi-database pe-2"></i>Load Data
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <form id="load-data" class="row gy-2 gx-3 align-items-start p-2" action="query/" novalidate>
+
+          <div class="col-xl-4 col-lg-12">
+            <div class="input-group">
+              <span id="index-label" class="input-group-text">Index</span>
+              <input id="index" class="form-control" type="text" aria-describedby="index-label"
+                placeholder="arkime_sessions*" value="arkime_sessions*" required>
+              <div id="index-invalid" class="invalid-feedback">
+                Please specify a Datastore index to load data from. Can include wildcards.
+              </div>
+            </div>
+          </div>
+
+          <div class="col-xl-4 col-lg-6">
+            <div class="input-group">
+              <span id="start-time-label" class="input-group-text">Start Time</span>
+              <div class="input-group-text">
+                <input id="enable-start-time" class="form-check-input input-enable mt-0" type="checkbox"
+                  aria-label="Enable Start Time Filter">
+              </div>
+              <input id="start-time" class="form-control rounded-end" type="datetime-local" step="1" disabled>
+              <div id="start-time-invalid" class="invalid-feedback">
+                Please specify a start time or disable the start time filter.
+              </div>
+            </div>
+          </div>
+
+          <div class="col-xl-4 col-lg-6">
+            <div class="input-group">
+              <span id="end-time-label" class="input-group-text">End Time</span>
+              <div class="input-group-text">
+                <input id="enable-end-time" class="form-check-input input-enable mt-0" type="checkbox"
+                  aria-label="Enable End Time Filter">
+              </div>
+              <input id="end-time" class="form-control rounded-end" type="datetime-local" step="1" disabled>
+              <div id="end-time-invalid" class="invalid-feedback">
+                Please specify an end time or disable the end time filter.
+              </div>
+            </div>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>

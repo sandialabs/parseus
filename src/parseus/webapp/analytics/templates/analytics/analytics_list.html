@@ -1,0 +1,53 @@
+{% load analytics_extras %}
+<div class="accordion m-2" id="accordion">
+  {% for family in families %}
+  <div class="accordion-item m-1">
+    <h2 class="accordion-header" id="heading_{{family.family}}">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        data-bs-target="#collapse_{{family.family}}" aria-expanded="false"
+        aria-controls="collapse_{{family.family}}">
+        {{ family.family|replace:"_" }}
+      </button>
+    </h2>
+    <div id="collapse_{{family.family}}" class="accordion-collapse collapse"
+      aria-labelledby="heading_{{family.family}}" data-bs-parent="#accordion">
+      <div class="accordion-body">
+        <div class="list-group" id="{{family.family}}_id">
+          {% for analytic in analytics %}
+          {% if analytic.family == family.family %}
+          <div class="px-2 list-group-item">
+            <div class="form-check">
+              <div class="row">
+                <div class="col-1">
+                  <input class="form-check-input" name="train_box" type="checkbox" value="{{analytic.pk}}"
+                    id="{{analytic.name}}-{{analytic.model}}-check" />
+                </div>
+                <div class="col-9">
+                  <label class="form-check-label" for="{{analytic.name}}-{{analytic.model}}-check">{{analytic.name}}</label>
+                </div>
+                <div class="col-12">
+                  <span class="float-end" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true"
+                    data-bs-title="{{analytic.summary}} <br><br> <b>Click for more info</b>"
+                    onclick="analytics.analytic_modal('{{analytic.name}}-{{analytic.model}}-modal')">
+                    <i class="bi bi-question-circle" role="button"></i>
+                  </span>
+                  <span class="float-end px-2"
+                    onclick="analytics.analytic_modal('{{analytic.name}}-{{analytic.model}}-ui-modal')">
+                    <i class="bi bi-sliders" role="button"></i>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- analaytic description modal -->
+          {% include "analytics/modal_analytic_desc.html" %}
+          <!-- analytic settings modal-->
+          {% include "analytics/modal_analytic_ui.html" %}
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container d-flex flex-column flex-grow-1">
+<div class="container">
+    <div class="row my-4 justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="border rounded bg-body-tertiary">
+                <div class="fs-3 border-bottom py-1 px-3">Welcome</div>
+                <div class="flex-grow-1 border-bottom p-4">This is the Parseus UI!</div>
+                <div class="flex-grow-1 border-bottom p-4 card">
+                      <ul class="list-group list-group-flush">
+                        {% for item in parseus_nav_items %}
+                        {% if item.description %}
+                        <li class="list-group-item">
+                            <a href="{% url item.url_name %}" class="card-link">{{ item.label }}</a>
+                            <div class="fw-lighter">{{ item.description }}</div>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                      </ul>
+                </div>
+                <div class="d-flex justify-content-end p-2 bg-body-secondary rounded-bottom">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+{% block custom_scripts %}
+{% endblock %}

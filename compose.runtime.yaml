@@ -1,0 +1,308 @@
+services:
+
+  # -----------------------------------------------------------------
+  # 1. Core Parseus application including webapp.
+  # -----------------------------------------------------------------
+  web:
+    container_name: "${PARSEUS_PROJECT_NAME:-parseus}_web"
+    command: 
+      - daphne
+      - -u
+      - /tmp/daphne.sock
+      - src.parseus.webapp.project.asgi:application
+      - -b
+      - 0.0.0.0
+      - -p
+      - "8000"
+    env_file:
+      - /etc/parseus/envs/datastore.env
+      - /etc/parseus/envs/production.env
+      - /etc/parseus/envs/ingestor_health.env
+    networks:
+      - zebra_crossing
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"   # rotate when logs reach ~10 MiB
+        max-file: "3"     # keep up to 3 rotated files
+    restart: always
+    volumes:
+      - database_data:/home/webapp/.parseus/artifacts/database
+      - app_log_data:/home/webapp/.parseus/artifacts/logs
+      - media_data:/home/webapp/.parseus/artifacts/media
+      - static_data:/home/webapp/.parseus/artifacts/static
+
+  # -----------------------------------------------------------------
+  # 2. Core services (redis, beat, scheduler)
+  #    enabling Parseus to run periodic and asynchronous tasks. 
+  # -----------------------------------------------------------------
+  redis:
+    container_name: "${PARSEUS_PROJECT_NAME:-parseus}_redis"
+    networks:
+      - zebra_crossing
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  beat:
+    container_name: "${PARSEUS_PROJECT_NAME:-parseus}_celery_beat"
+    command: 
+      - celery
+      - -A
+      - src.parseus.webapp.project
+      - beat
+    env_file:
+      - /etc/parseus/envs/production.env
+    networks:
+      - zebra_crossing
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"   # rotate when logs reach ~10 MiB
+        max-file: "3"     # keep up to 3 rotated files
+    restart: always
+    volumes:
+      - database_data:/home/webapp/.parseus/artifacts/database
+    depends_on:
+      - redis
+
+  scheduler:
+    container_name: "${PARSEUS_PROJECT_NAME:-parseus}_celery_scheduler"
+    command: 
+      - celery
+      - -A
+      - src.parseus.webapp.project
+      - worker
+      - -Q
+      - analytics,maintenance
+    env_file:
+      - /etc/parseus/envs/datastore.env
+      - /etc/parseus/envs/production.env
+      - /etc/parseus/envs/ingestor_health.env
+    environment:
+      - FTP_CLEANUP_DIR=/ftp
+      - FTP_COMPLETED_LOG_PATH=/deploy/integrations/winlog/logstash/data/completed-files.log
+    networks:
+      - zebra_crossing
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"   # rotate when logs reach ~10 MiB
+        max-file: "3"     # keep up to 3 rotated files
+    restart: always
+    volumes:
+      - database_data:/home/webapp/.parseus/artifacts/database
+      - app_log_data:/home/webapp/.parseus/artifacts/logs
+      - media_data:/home/webapp/.parseus/artifacts/media
+      - pcap_data:/home/webapp/.parseus/artifacts/pcaps
+      - /var/lib/parseus/winlog/logstash:/deploy/integrations/winlog/logstash/data:ro
+      - ${PARSEUS_FTP_HOST_DIR:-/srv/parseus/ftp}:/ftp
+    depends_on:
+      - redis
+      - beat
+      - elasticsearch
+
+  peat:
+    container_name: "${PARSEUS_PROJECT_NAME:-parseus}_celery_peat"
+    command: 
+      - celery
+      - -A
+      - src.parseus.webapp.project
+      - worker
+      - -Q
+      - peat
+      - --concurrency=2
+      - --prefetch-multiplier=1
+      - -Ofair
+    env_file:
+      - /etc/parseus/envs/datastore.env
+      - /etc/parseus/envs/production.env
+    networks:
+      - zebra_crossing
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"   # rotate when logs reach ~10 MiB
+        max-file: "3"     # keep up to 3 rotated files
+    restart: always
+    volumes:
+      - database_data:/home/webapp/.parseus/artifacts/database
+      - app_log_data:/home/webapp/.parseus/artifacts/logs
+      - media_data:/home/webapp/.parseus/artifacts/media
+    depends_on:
+      - redis
+      - elasticsearch
+
+  # -----------------------------------------------------------------
+  # 3. [OPTIONAL] Additional services (nginx, elasticsearch, kibana)
+  #    enabling Parseus to run standalone. 
+  # -----------------------------------------------------------------
+  nginx:
+    container_name: "${PARSEUS_PROJECT_NAME:-parseus}_nginx"
+    volumes:
+      - /opt/parseus/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/parseus/certs/nginx-selfsigned.crt:/etc/ssl/certs/nginx.crt:ro    # Mount the cert
+      - /etc/parseus/certs/nginx-selfsigned.key:/etc/ssl/private/nginx.key:ro  # Mount the key
+      - nginx_log_data:/var/log/nginx
+      - media_data:/app/mediafiles:ro
+      - static_data:/app/staticfiles:ro
+    ports:
+      - ${PARSEUS_HTTP_BIND:-127.0.0.1}:${PARSEUS_HTTP_PORT:-80}:80
+      - ${PARSEUS_HTTPS_BIND:-127.0.0.1}:${PARSEUS_HTTPS_PORT:-443}:443
+    networks:
+      - zebra_crossing
+    restart: always
+    depends_on:
+      - web
+      - elasticsearch
+      - kibana
+
+  elasticsearch:
+    container_name: "${PARSEUS_PROJECT_NAME:-parseus}_elasticsearch"
+    environment:
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    networks:
+      zebra_crossing:
+        aliases:
+          - elasticsearch.local
+    volumes:
+      - ds_data:/usr/share/elasticsearch/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kibana:
+    container_name: "${PARSEUS_PROJECT_NAME:-parseus}_kibana"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=5601
+      - SERVER_BASEPATH=/kibana
+      - SERVER_REWRITEBASEPATH=true
+    networks:
+      - zebra_crossing
+    restart: always
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  # -----------------------------------------------------------------
+  # 4. [OPTIONAL] GPIB ingestor service
+  #    connects to the GPIB bridge and parses payloads in one process.
+  # -----------------------------------------------------------------
+  gpib:
+    container_name: "${PARSEUS_PROJECT_NAME:-parseus}_gpib"
+    profiles:
+      - ingestors
+      - gpib
+    pull_policy: never
+    command:
+      - python
+      - -m
+      - parseus.ingestors.gpib.parser
+    env_file:
+      - /etc/parseus/envs/datastore.env
+      - /etc/parseus/envs/ingestor.env
+    environment:
+      - INGESTOR_CAPTURE_DIR=/home/webapp/.parseus/artifacts/pcaps
+    network_mode: host
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"   # rotate when logs reach ~10 MiB
+        max-file: "3"     # keep up to 3 rotated files
+    volumes:
+      - app_log_data:/home/webapp/.parseus/artifacts/logs
+      - pcap_data:/home/webapp/.parseus/artifacts/pcaps
+    restart: always
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >
+          python -c "from pathlib import Path; import sys; data = Path('/proc/1/cmdline').read_bytes(); sys.exit(0 if b'parseus.ingestors.gpib.parser' in data else 1)"
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      - elasticsearch
+
+  # -----------------------------------------------------------------
+  # 5. [OPTIONAL] Winlog ingestion services
+  #    enabling Parseus to ingest Winlogbeat-compatible event files.
+  # -----------------------------------------------------------------
+  elasticsearch-init:
+    container_name: "${PARSEUS_PROJECT_NAME:-parseus}_elasticsearch_init"
+    profiles:
+      - ingestors
+      - winlog
+    depends_on:
+      - elasticsearch
+    volumes:
+      - /opt/parseus/deploy/integrations/winlog/elasticsearch:/setup:ro
+    working_dir: /setup
+    command:
+      - python
+      - init_ilm.py
+    restart: "no"
+    networks:
+      - zebra_crossing
+
+  logstash:
+    container_name: "${PARSEUS_PROJECT_NAME:-parseus}_logstash"
+    profiles:
+      - ingestors
+      - winlog
+    networks:
+      - zebra_crossing
+    volumes:
+      - /opt/parseus/deploy/integrations/winlog/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - /opt/parseus/deploy/integrations/winlog/logstash/config:/usr/share/logstash/config:ro
+      - /var/lib/parseus/winlog/logstash:/usr/share/logstash/data
+      - ${PARSEUS_FTP_HOST_DIR:-/srv/parseus/ftp}:/usr/share/logstash/logs
+    restart: always
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >
+          if command -v curl >/dev/null 2>&1; then
+            curl -fsS http://127.0.0.1:9600/_node/pipelines/main >/dev/null;
+          elif command -v wget >/dev/null 2>&1; then
+            wget -qO- http://127.0.0.1:9600/_node/pipelines/main >/dev/null;
+          else
+            tr '\000' ' ' </proc/1/cmdline | grep -q logstash;
+          fi
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    depends_on:
+      - elasticsearch
+
+networks:
+  zebra_crossing:
+    driver: bridge
+
+volumes:
+  database_data:
+    name: "${PARSEUS_PROJECT_NAME:-parseus}_database_data"
+  ds_data:
+    name: "${PARSEUS_PROJECT_NAME:-parseus}_datastore_data"
+  app_log_data:
+    name: "${PARSEUS_PROJECT_NAME:-parseus}_app_log_data"
+  nginx_log_data:
+    name: "${PARSEUS_PROJECT_NAME:-parseus}_nginx_log_data"
+  media_data:
+    name: "${PARSEUS_PROJECT_NAME:-parseus}_media_data"
+  pcap_data:
+    name: "${PARSEUS_PROJECT_NAME:-parseus}_pcap_data"
+  static_data:
+    name: "${PARSEUS_PROJECT_NAME:-parseus}_static_data"

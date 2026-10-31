@@ -1,0 +1,26 @@
+<div class="accordion" id="accordionAlerts">
+  <!-- Alert data JSON (hidden from the user but used by javascript) -->
+  {{ analytics|json_script:"unsupervised-alerts-json" }}
+  
+  <!-- Alert data rendered for the user -->
+  {% for analytic,data in analytics.items %}
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="heading_{{ analytic }}">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        data-bs-target="#collapse_{{ analytic }}" aria-expanded="false" aria-controls="collapse_{{ analytic }}">
+        {{ analytic }}
+      </button>
+    </h2>
+    <div id="collapse_{{ analytic }}" class="accordion-collapse collapse" aria-labelledby="heading_{{ analytic }}"
+      data-bs-parent="#accordionAlerts">
+      <div class="accordion-body">
+        {% for item in data %}
+        <ul>
+          <li class="unsupervised-alert">{{ item }}</li>
+        </ul>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>

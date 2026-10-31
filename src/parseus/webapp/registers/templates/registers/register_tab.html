@@ -1,0 +1,49 @@
+{% include "registers/registers_modal.html" %}
+{% include "registers/registers_name_map_modal.html" %}
+
+{% include "registers/registers_and_summary.html" %}
+
+<div class="container pb-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex flex-column border rounded bg-body-secondary h-100 overflow-auto p-2">
+
+        <nav>
+          <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home"
+              type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+              <i class="bi-clipboard-data"></i>
+              Registers
+            </button>
+            <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile"
+              type="button" role="tab" aria-controls="nav-profile" aria-selected="false">
+              <i class="bi-diagram-3"></i>
+              State
+            </button>
+          </div>
+        </nav>
+
+        <div class="tab-content" id="nav-tabContent">
+          <div class="tab-pane fade show active p-2" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+            View registers and their values. Ability to sort by IP's and groupings. Also, ability to look at true or
+            normalized values.
+            {% include "registers/registers.html" %}
+          </div>
+          <div class="tab-pane fade p-2" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
+            Register states represent an exploratory research effort to analyze register values over time from a novel perspective.<br><br>
+            
+            Applied machine learning applications such as PCA and clustering to identify similar states within the
+            selected registers. Outlier states are assigned a negative value.
+            <ul>
+              <li>Register state over time: Scatter plot of register states assigned sequentially over time</li>
+              <li>Register updates heatmap: Shows frequency of individual registers changing over time </li>
+              <li>State Transition Graph: Shows which states transition to other states. </li>
+            </ul>
+            {% include "registers/state.html" %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
