@@ -1,0 +1,90 @@
+name: Release
+
+# Versioning is Releasaurus: a push to main opens/updates the release PR (next version from conventional commits, plus the
+# changelog); merging that PR bumps pyproject.toml, tags vX.Y.Z and publishes the GitHub Release.
+#
+# Tags and releases created with the default GITHUB_TOKEN do NOT trigger other workflows, so the tag-gated jobs in ci.yml
+# (verify-version, verify-release-compose) never fire for a Releasaurus release. `verify` below runs the same two checks on
+# the tag `release` just created. A v* tag pushed by hand with a real user token still triggers ci.yml. No PAT or App secret.
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+# One at a time: Releasaurus must not race itself.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # `release` publishes a merged release PR first, then `release-pr` opens/updates the next one (the order its docs require).
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      tag: ${{ steps.after.outputs.tag }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - id: before
+        run: echo "tags=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/v" --paginate --jq '.[].ref' | sort | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+      - uses: robgonnella/releasaurus/action@9843e67bc1fdd96c0cf033c9b5b24a1e2fc91c77 # v1.3.0
+        with:
+          command: release
+          command_args: --forge github --repo ${{ github.server_url }}/${{ github.repository }}
+      - id: after
+        env:
+          BEFORE: ${{ steps.before.outputs.tags }}
+        run: |
+          tag=''
+          for ref in $(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/v" --paginate --jq '.[].ref'); do
+            case " $BEFORE" in *" $ref "*) ;; *) tag="${ref#refs/tags/}" ;; esac
+          done
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "new release tag: ${tag:-none}"
+      - uses: robgonnella/releasaurus/action@9843e67bc1fdd96c0cf033c9b5b24a1e2fc91c77 # v1.3.0
+        with:
+          command: release-pr
+          command_args: --forge github --repo ${{ github.server_url }}/${{ github.repository }}
+
+  verify:
+    # Same checks as ci.yml verify-version + verify-release-compose, run on the tag Releasaurus just created.
+    needs: [release]
+    if: needs.release.outputs.tag != ''
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ needs.release.outputs.tag }}
+          persist-credentials: false
+      - name: Verify tag version matches pyproject.toml and compose image versions
+        env:
+          TAG: ${{ needs.release.outputs.tag }}
+        run: |
+          export PARSEUS_VERSION="${TAG#v}"
+          PROJECT_VERSION="$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          test "$PARSEUS_VERSION" = "$PROJECT_VERSION"
+
+          if grep -REn "image:[[:space:]]*parseus:[0-9A-Za-z._-]" compose.build.yaml compose.images.yaml; then
+            echo "Hardcoded parseus image version found in compose files"
+            exit 1
+          fi
+
+          docker compose -f compose.build.yaml config --images | tee build-images.txt
+          docker compose -f compose.images.yaml config --images | tee runtime-images.txt
+
+          grep -qx "parseus:${PARSEUS_VERSION}" build-images.txt
+          grep -qx "parseus:${PARSEUS_VERSION}" runtime-images.txt
+
+          awk -v expected="parseus:${PARSEUS_VERSION}" '
+            index($0, "parseus:") == 1 && $0 != expected {
+              print "Unexpected Parseus image: " $0 " (expected " expected ")"
+              bad=1
+            }
+            END { exit bad }
+          ' build-images.txt runtime-images.txt

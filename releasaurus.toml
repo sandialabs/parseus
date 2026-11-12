@@ -1,0 +1,6 @@
+# Releasaurus (https://releasaurus.rgon.io) opens the release PR on pushes to main; merging it tags vX.Y.Z and
+# publishes the GitHub Release (.github/workflows/release.yml). `python` bumps the version in pyproject.toml, the single
+# source of truth: parseus.__version__ reads it from package metadata and the Makefile/compose files read it from pyproject.
+[[package]]
+path = "."
+release_type = "python"
